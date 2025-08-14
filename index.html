@@ -1,689 +1,394 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Laboratorio de la Escala Menor Melódica</title>
-  <!-- Enlaces a Tailwind CSS, Tone.js y html2canvas -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/lucide@latest"></script>
-  <script src="https://cdn.jsdelivr.net/npm/tone@14.7.58/build/Tone.js"></script>
-  <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Roboto+Mono:wght@400;700&display=swap');
-    
-    body {
-      font-family: 'Inter', sans-serif;
-    }
-    
-    .font-mono {
-      font-family: 'Roboto Mono', monospace;
-    }
-    
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(-20px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    @keyframes slideUp {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    .animate-fade-in {
-      animation: fadeIn 0.6s ease-out;
-    }
-    .animate-slide-up {
-      animation: slideUp 0.6s ease-out 0.2s forwards;
-      opacity: 0;
-    }
-    .animate-pulse {
-        animation: pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-    }
-    @keyframes pulse {
-        0%, 100% {
-            border-color: #fcd34d;
-            box-shadow: 0 0 5px #fcd34d;
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lista de Asistencia - Cursos</title>
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+            color: #1f2937;
         }
-        50% {
-            border-color: rgba(252, 211, 77, 0.4);
-            box-shadow: 0 0 15px rgba(252, 211, 77, 0.8);
+        .container {
+            max-width: 95%;
+            margin: auto;
         }
-    }
-  </style>
+        /* Contenedor principal de la tabla con scroll horizontal y vertical */
+        .table-container {
+            max-height: 80vh; /* Permite desplazamiento vertical si la tabla es muy larga */
+            overflow: auto;
+            border-radius: 0.5rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        table {
+            width: 100%;
+            min-width: 1200px; /* Asegura el scroll horizontal en pantallas pequeñas */
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+        th, td {
+            padding: 0.75rem;
+            text-align: center;
+            border-bottom: 1px solid #e5e7eb;
+            font-size: 0.875rem;
+            white-space: nowrap;
+            background-color: #ffffff; /* Fondo para evitar que el contenido se muestre al hacer scroll */
+        }
+        th {
+            background-color: #4b5563;
+            color: #ffffff;
+            font-weight: 600;
+            vertical-align: top;
+        }
+        /* La fila de encabezados se mantiene fija en la parte superior */
+        thead tr th {
+            position: sticky;
+            top: 0;
+            z-index: 20;
+            background-color: #4b5563; /* Fondo para que no sea transparente */
+        }
+        /* La celda de la esquina superior izquierda se fija en ambas direcciones */
+        thead th:first-child {
+            left: 0;
+            z-index: 21;
+            box-shadow: 2px 0 5px -2px rgba(0, 0, 0, 0.1); /* Sombra para resaltar */
+        }
+        /* La primera columna de datos se mantiene fija a la izquierda */
+        tbody tr td:first-child {
+            position: sticky;
+            left: 0;
+            z-index: 10;
+            text-align: left;
+            font-weight: bold;
+            background-color: #f9fafb; /* Fondo para que no sea transparente */
+            box-shadow: 2px 0 5px -2px rgba(0, 0, 0, 0.1);
+        }
+        tr:last-child td {
+            border-bottom: none;
+        }
+        .alert-row {
+            background-color: #fee2e2;
+        }
+        .tab-button {
+            padding: 1rem 1.5rem;
+            border-radius: 0.5rem 0.5rem 0 0;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+        .tab-button.active {
+            background-color: #4b5563;
+            color: #ffffff;
+        }
+        .tab-button:not(.active) {
+            background-color: #d1d5db;
+            color: #4b5563;
+        }
+        .attendance-input {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.25rem;
+            padding: 0.25rem 0;
+        }
+        .attendance-input label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .message-box {
+            position: fixed;
+            bottom: 1rem;
+            right: 1rem;
+            background-color: #4CAF50;
+            color: white;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: opacity 0.3s ease;
+        }
+    </style>
 </head>
-<body class="bg-gray-900 text-white flex flex-col items-center p-4 pb-12">
-  <div class="bg-gray-800 shadow-2xl rounded-3xl p-8 max-w-4xl w-full flex flex-col space-y-8 animate-fade-in">
-    <h1 class="text-4xl font-extrabold text-center text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-blue-500 mb-2">
-      Laboratorio de la Escala Menor Melódica
-    </h1>
-    <p class="text-center text-gray-400 max-w-xl mx-auto">
-      Selecciona una nota raíz y un tipo de acorde para ver la escala menor melódica que puedes usar para improvisar.
-    </p>
+<body class="bg-gray-100 p-4 sm:p-8">
+    <div class="container max-w-screen-2xl bg-white shadow-xl rounded-xl p-4 sm:p-8 mt-4">
+        <h1 class="text-3xl sm:text-4xl font-bold text-center mb-6 text-gray-800">Control de Asistencia de Clases</h1>
 
-    <div class="grid md:grid-cols-2 gap-6">
-      <!-- Selector de Nota Raíz -->
-      <div class="flex flex-col items-center">
-        <label for="root-note" class="text-xl font-bold mb-2 text-teal-300 flex items-center">
-          <i data-lucide="music-2" class="mr-2"></i> Nota Raíz
-        </label>
-        <div class="relative w-full">
-          <select id="root-note" class="w-full bg-gray-700 text-white border-none rounded-xl p-3 appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all cursor-pointer">
-            <!-- Opciones generadas por JavaScript -->
-          </select>
-          <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-gray-400">
-            <i data-lucide="chevron-down" size="20"></i>
-          </div>
+        <!-- Tab Navigation -->
+        <div class="flex justify-center mb-8">
+            <button id="tab-1" class="tab-button active">CMS XX y XXI I</button>
+            <button id="tab-2" class="tab-button">CMS XX y XXI II</button>
         </div>
-      </div>
-
-      <!-- Selector de Tipo de Acorde -->
-      <div class="flex flex-col items-center">
-        <label for="chord-type" class="text-xl font-bold mb-2 text-teal-300 flex items-center">
-          <i data-lucide="scale" class="mr-2"></i> Tipo de Acorde
-        </label>
-        <div class="relative w-full">
-          <select id="chord-type" class="w-full bg-gray-700 text-white border-none rounded-xl p-3 appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all cursor-pointer">
-            <!-- Opciones generadas por JavaScript -->
-          </select>
-          <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-gray-400">
-            <i data-lucide="chevron-down" size="20"></i>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Sección de Resultados -->
-    <div id="results-section" class="bg-gray-700 p-6 rounded-2xl mt-8 shadow-inner animate-slide-up">
-      <!-- Contenido generado por JavaScript -->
-    </div>
-
-    <!-- Sección de Lick Aleatorio -->
-    <div id="random-lick-section" class="bg-gray-700 p-6 rounded-2xl mt-8 shadow-inner animate-slide-up">
-      <div class="flex justify-center items-center mb-4 space-x-2">
-        <h3 class="text-3xl font-extrabold text-white">
-          Lick Aleatorio
-        </h3>
-      </div>
-
-      <!-- Control deslizante para la longitud del lick -->
-      <div class="mb-6 w-full flex flex-col items-center">
-        <label for="lick-length-slider" class="text-lg font-semibold mb-2 text-gray-300 flex items-center">
-          <i data-lucide="grip-lines" class="mr-2"></i> Notas en el lick: <span id="lick-length-value" class="font-mono text-yellow-300 ml-2">4</span>
-        </label>
-        <!-- Rango del slider ajustado de 1 a 7 -->
-        <input type="range" id="lick-length-slider" min="1" max="7" value="4" class="w-full h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer range-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-      </div>
-      
-      <div class="flex flex-wrap space-x-2 mt-4 md:mt-0 justify-center">
-        <button id="generate-lick-btn" class="flex items-center px-4 py-2 rounded-full transition-all duration-300 bg-purple-600 hover:bg-purple-700 text-white focus:outline-none focus:ring-2 focus:ring-purple-400">
-          <i data-lucide="dice-3" class="mr-2"></i> Generar Nuevo Lick
-        </button>
-        <button id="save-lick-btn" class="flex items-center px-4 py-2 rounded-full transition-all duration-300 bg-teal-600 hover:bg-teal-700 text-white focus:outline-none focus:ring-2 focus:ring-teal-400 disabled:bg-gray-600 disabled:text-gray-400 disabled:cursor-not-allowed">
-          <i data-lucide="save" class="mr-2"></i> Guardar Lick
-        </button>
-        <button id="export-lick-btn" class="flex items-center px-4 py-2 rounded-full transition-all duration-300 bg-blue-600 hover:bg-blue-700 text-white focus:outline-none focus:ring-2 focus:ring-blue-400 disabled:bg-gray-600 disabled:text-gray-400 disabled:cursor-not-allowed">
-          <i data-lucide="download" class="mr-2"></i> Exportar
-        </button>
-      </div>
-      
-      <div id="random-lick-display" class="flex flex-col items-center">
-        <!-- Lick aleatorio generado por JavaScript -->
-      </div>
-    </div>
-
-    <!-- Sección de Licks Guardados -->
-    <div id="saved-licks-section" class="bg-gray-700 p-6 rounded-2xl mt-8 shadow-inner animate-slide-up">
-      <h3 class="text-3xl font-extrabold text-white text-center mb-4">
-        Licks Guardados
-      </h3>
-      <div id="saved-licks-container" class="flex flex-col space-y-6">
-        <!-- Licks guardados generados por JavaScript -->
-      </div>
-    </div>
-    
-    <!-- Créditos del desarrollador -->
-    <div class="mt-8 text-center text-gray-500 text-sm">
-      <p>Creado por Juan Miguel Rios Redondo</p>
-    </div>
-  </div>
-  
-  <script>
-    // Inicializar los iconos de Lucide
-    lucide.createIcons();
-
-    // Variables globales
-    let synth = null;
-    let reverb = null;
-    let chorus = null;
-    let lickSequence = null;
-    let isLickPlaying = false;
-    let currentPlayingNoteIndex = null;
-    let currentLickPlayingIndex = null;
-    let randomLick = [];
-    let randomLickIntervals = [];
-    let savedLicks = [];
-
-    // Constantes musicales
-    const NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-    const CHORD_FORMULAS = {
-      maj7: [0, 4, 7, 11],
-      m7: [0, 3, 7, 10],
-      '7(b9)': [0, 4, 7, 10],
-      '7(Alt)': [0, 4, 7, 10],
-      '7(#11)': [0, 4, 7, 10],
-      'm7(b5)': [0, 3, 6, 10],
-    };
-    const SCALE_RELATIONSHIPS = {
-      maj7: { relation: 'escala menor melódica sobre la 6ta', offset: 9, title: 'Xmaj7' },
-      m7: { relation: 'escala menor melódica sobre la raíz', offset: 0, title: 'Xm7' },
-      '7(b9)': { relation: 'escala menor melódica sobre la b7', offset: 10, title: 'X7(b9)' },
-      '7(Alt)': { relation: 'escala menor melódica sobre la b2', offset: 1, title: 'X7(Alt)' },
-      '7(#11)': { relation: 'escala menor melódica sobre la 5 justa', offset: 7, title: 'X7(#11)' },
-      'm7(b5)': { relation: 'escala menor melódica sobre el b3', offset: 3, title: 'Xm7(b5)' },
-    };
-    const MELODIC_MINOR_FORMULA = [0, 2, 3, 5, 7, 9, 11];
-    const KEY_NOTE_MAP = {
-      'C': ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'],
-      'C#': ['C#', 'D', 'D#', 'E', 'E#', 'F#', 'G', 'G#', 'A', 'A#', 'B', 'B#'],
-      'Db': ['Db', 'Ebb', 'Eb', 'Fb', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B', 'C'],
-      'D': ['D', 'Eb', 'E', 'F', 'F#', 'G', 'G#', 'A', 'Bb', 'B', 'C', 'C#'],
-      'D#': ['D#', 'E', 'E#', 'F#', 'F##', 'G#', 'A', 'A#', 'B', 'B#', 'C#', 'C##'],
-      'Eb': ['Eb', 'Fb', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B', 'C', 'Db', 'D'],
-      'E': ['E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B', 'C', 'C#', 'D', 'D#'],
-      'F': ['F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B', 'C', 'Db', 'D', 'Eb', 'E'],
-      'F#': ['F#', 'G', 'G#', 'A', 'A#', 'B', 'C', 'C#', 'D', 'D#', 'E', 'E#'],
-      'Gb': ['Gb', 'Abb', 'Ab', 'Bbb', 'Bb', 'Cb', 'C', 'Db', 'D', 'Eb', 'E', 'F'],
-      'G': ['G', 'Ab', 'A', 'Bb', 'B', 'C', 'Db', 'D', 'Eb', 'E', 'F', 'F#'],
-      'G#': ['G#', 'A', 'A#', 'B', 'B#', 'C#', 'D', 'D#', 'E', 'E#', 'F#', 'F##'],
-      'Ab': ['Ab', 'Bbb', 'Bb', 'Cb', 'C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G'],
-      'A': ['A', 'Bb', 'B', 'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#'],
-      'A#': ['A#', 'B', 'B#', 'C#', 'C##', 'D#', 'E', 'E#', 'F#', 'F##', 'G#', 'G##'],
-      'Bb': ['Bb', 'Cb', 'C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A'],
-      'B': ['B', 'C', 'C#', 'D', 'D#', 'E', 'E#', 'F#', 'G', 'G#', 'A', 'A#'],
-    };
-    const NOTE_TO_SEMITONE_MAP = {
-      'C': 0, 'C#': 1, 'Db': 1, 'D': 2, 'D#': 3, 'Eb': 3, 'E': 4, 'Fb': 4, 'E#': 5, 'F': 5, 'F#': 6,
-      'Gb': 6, 'G': 7, 'G#': 8, 'Ab': 8, 'A': 9, 'A#': 10, 'Bb': 10, 'B': 11, 'Cb': 11, 'B#': 0,
-      'Ebb': 2, 'F##': 7, 'Abb': 7, 'Bbb': 9, 'Dbb': 0, 'G##': 10,
-    };
-    const INTERVAL_MAPS_BY_CHORD_TYPE = {
-      // Modificado para usar 9, 11 y 13 para segundas, cuartas y sextas respectivamente
-      maj7: { 0: '1', 2: '9', 4: '11', 6: '#11', 8: '#5', 9: '13', 11: '7' },
-      m7: { 0: '1', 2: '9', 3: 'b3', 5: '11', 7: '5', 9: '13', 11: '7' },
-      '7(b9)': { 0: '1', 1: 'b9', 3: '#9', 5: '11', 7: '5', 9: '13', 10: 'b7' },
-      // Corregido: b6 se cambia a b13
-      '7(Alt)': { 0: '1', 1: 'b9', 3: '#9', 4: '11', 6: 'b5', 8: 'b13', 10: 'b7' },
-      '7(#11)': { 0: '1', 2: '9', 4: '11', 6: '#11', 7: '5', 9: '13', 10: 'b7' },
-      // Corregido: b6 se cambia a b13
-      'm7(b5)': { 0: '1', 2: '9', 3: 'b3', 5: '11', 6: 'b5', 8: 'b13', 10: 'b7' }
-    };
-    const ENHARMONIC_MAP = { 'Fb': 'E', 'Cb': 'B', 'E#': 'F', 'B#': 'C' };
-
-    // Funciones de utilidad para lógica musical
-    function getCorrectlySpelledNotes(root, intervals) {
-      const rootKeyMap = KEY_NOTE_MAP[root];
-      if (!rootKeyMap) return [];
-      return intervals.map(semitone => rootKeyMap[semitone % 12]);
-    }
-
-    function getCorrectlySpelledScaleRoot(root, offset) {
-      const rootKeyMap = KEY_NOTE_MAP[root];
-      if (!rootKeyMap) return null;
-      return rootKeyMap[offset % 12];
-    }
-
-    function getIntervalName(chordType, rootNote, targetNote) {
-      const rootSemitone = NOTE_TO_SEMITONE_MAP[rootNote];
-      const targetSemitone = NOTE_TO_SEMITONE_MAP[targetNote];
-      if (rootSemitone === undefined || targetSemitone === undefined) return 'Error';
-      const semitoneOffset = (targetSemitone - rootSemitone + 12) % 12;
-      const intervalMap = INTERVAL_MAPS_BY_CHORD_TYPE[chordType];
-      return intervalMap[semitoneOffset] || 'Error';
-    }
-
-    function getEnharmonicNote(note) {
-      return ENHARMONIC_MAP[note] || note;
-    }
-    
-    // Función para obtener los nombres de los intervalos de la escala menor melódica
-    function getScaleIntervals(chordType, rootNote) {
-        const relationship = SCALE_RELATIONSHIPS[chordType];
-        const melodicMinorRootNote = getCorrectlySpelledScaleRoot(rootNote, relationship.offset);
-        const melodicMinorNotes = melodicMinorRootNote ? getCorrectlySpelledNotes(melodicMinorRootNote, MELODIC_MINOR_FORMULA).map(getEnharmonicNote) : [];
         
-        return melodicMinorNotes.map(note => getIntervalName(chordType, rootNote, note));
-    }
+        <h2 id="courseTitle" class="text-2xl font-bold text-center mb-2 text-gray-700"></h2>
+        <div id="courseInfo" class="text-center text-gray-600 mb-4"></div>
 
-
-    // Funciones de renderizado UI
-    function updateScaleAndChordDisplay(selectedRoot, selectedChordType) {
-      const relationship = SCALE_RELATIONSHIPS[selectedChordType];
-      const chordNotes = getCorrectlySpelledNotes(selectedRoot, CHORD_FORMULAS[selectedChordType]);
-      const melodicMinorRootNote = getCorrectlySpelledScaleRoot(selectedRoot, relationship.offset);
-      const melodicMinorNotes = melodicMinorRootNote ? getCorrectlySpelledNotes(melodicMinorRootNote, MELODIC_MINOR_FORMULA).map(getEnharmonicNote) : [];
-      const melodicMinorIntervals = getScaleIntervals(selectedChordType, selectedRoot);
-      
-      const resultsSection = document.getElementById('results-section');
-      
-      // Building the HTML for the new scale design.
-      // We use flex-1 on the note divs to make them take up equal space and avoid horizontal scrolling.
-      // Reduced font size and padding to fit better on small screens
-      const scaleNotesHtml = melodicMinorNotes.map((note, index) => `
-        <div class="flex-1 bg-gray-800 p-2 rounded-xl flex flex-col items-center justify-center shadow-lg mx-1">
-          <span class="font-mono text-xl font-bold text-teal-300">${note}</span>
-          <span class="text-xs text-gray-400 font-mono">${melodicMinorIntervals[index]}</span>
+        <!-- Attendance Table -->
+        <div id="attendanceTableContainer" class="table-container">
+            <!-- Table will be rendered here by JavaScript -->
         </div>
-      `).join('');
-      
-      resultsSection.innerHTML = `
-        <div class="flex justify-center items-center mb-4 space-x-2">
-          <h2 class="text-3xl font-extrabold text-white">
-            ${selectedRoot}${relationship.title.slice(1)}
-          </h2>
-        </div>
-        <p class="text-center text-lg text-gray-300 mb-4 font-semibold">
-          Acorde: <span class="font-mono text-xl text-yellow-300">${chordNotes.join(', ')}</span>
-        </p>
-        <hr class="border-gray-600 my-4" />
-        <p class="text-center text-lg text-gray-300 mb-2">
-          Usa la escala:
-        </p>
-        <p class="text-center text-2xl font-bold text-blue-300 mb-2">
-          ${getEnharmonicNote(melodicMinorRootNote)} menor melódica
-        </p>
-        <p class="text-center text-sm text-gray-400 italic">
-          (${relationship.relation})
-        </p>
-        <div class="flex flex-row justify-center gap-1 mt-4">
-          ${scaleNotesHtml}
-        </div>
-      `;
-    }
+        
+        <!-- Message box for user notifications -->
+        <div id="message-box" class="hidden message-box"></div>
+    </div>
 
-    function renderRandomLick() {
-      const lickDisplay = document.getElementById('random-lick-display');
-      const saveBtn = document.getElementById('save-lick-btn');
-      const exportBtn = document.getElementById('export-lick-btn');
+    <script>
+        // UI Elements
+        const tableContainer = document.getElementById('attendanceTableContainer');
+        const messageBox = document.getElementById('message-box');
+        const courseTitle = document.getElementById('courseTitle');
+        const courseInfo = document.getElementById('courseInfo');
 
-      if (randomLick.length === 0) {
-        lickDisplay.innerHTML = '';
-        if (saveBtn) saveBtn.disabled = true;
-        if (exportBtn) exportBtn.disabled = true;
-        return;
-      }
+        // Show a message to the user
+        const showMessage = (text, type = 'success') => {
+            messageBox.textContent = text;
+            messageBox.style.backgroundColor = type === 'success' ? '#4CAF50' : '#f44336';
+            messageBox.classList.remove('hidden');
+            setTimeout(() => {
+                messageBox.classList.add('hidden');
+            }, 3000);
+        };
+        
+        // Function to format names
+        const capitalizeWords = (str) => {
+            return str.toLowerCase().split(' ').map(word => {
+                return word.charAt(0).toUpperCase() + word.slice(1);
+            }).join(' ');
+        };
 
-      // Estilos ajustados para que las notas del lick aleatorio se vean como las de la escala.
-      // Usamos flex-1, p-2 y los mismos tamaños de fuente.
-      lickDisplay.innerHTML = `
-        <div class="flex flex-row justify-center gap-1 mt-4" id="random-lick-notes-container">
-          ${randomLick.map((note, index) => `
-            <div id="random-note-${index}" class="flex-1 bg-gray-800 p-2 rounded-xl flex flex-col items-center justify-center border-2 transition-all duration-300 border-transparent shadow-lg">
-              <span class="font-mono text-xl font-bold text-yellow-300">${note}</span>
-              <span class="text-xs text-gray-400 font-mono">${randomLickIntervals[index]}</span>
-            </div>
-          `).join('')}
-        </div>
-        <div class="flex justify-center mt-4">
-          <button id="play-lick-btn" class="flex items-center px-4 py-2 rounded-full transition-all duration-300 bg-pink-600 hover:bg-pink-700 text-white focus:outline-none focus:ring-2 focus:ring-pink-400">
-            <i data-lucide="play" class="mr-2 play-icon"></i>
-            <i data-lucide="stop-circle" class="mr-2 stop-icon hidden"></i>
-            Tocar Lick
-          </button>
-        </div>
-      `;
-      // Vuelve a crear los íconos de Lucide
-      lucide.createIcons();
+        // Student data for each course
+        const studentsCursoI = [
+            "ALVARADO POLO, MARCELA", "LEAL JIMENEZ, LUIS", "MARTINEZ GUZMAN, ESTEBAN",
+            "NADER ZAPATA, SHAIEL", "RODRIGUEZ GONZALEZ, JESUS", "SANTAMARIA BARRAZA, MIGUEL"
+        ].map(capitalizeWords);
+        const studentsCursoII = [
+            "AGUDELO BALLESTEROS, DANIEL", "APARICIO HOYOS, ESTEBAN", "BATISTA MIRANDA, JHORMAN",
+            "ESCOBAR DE ALBA, ANGEL", "ESPARZA MERCADO, PABLO", "QUINTERO RICARDO, SANTIAGO",
+            "RODRIGUEZ LARA, NATALIA", "ROSERO SAUCEDO, THOMAS", "SUAREZ OVIEDO, CARLOS",
+            "VENDRIES CORREA, SANTIAGO"
+        ].map(capitalizeWords);
+        
+        // Specific dates for the 16 classes (omitting Oct 8th)
+        const classDates = [
+            "30-Jul", "06-Ago", "13-Ago", "20-Ago", "27-Ago", "03-Sep",
+            "10-Sep", "17-Sep", "24-Sep", "01-Oct", "15-Oct", "22-Oct",
+            "29-Oct", "05-Nov", "12-Nov", "19-Nov"
+        ];
 
-      // Desactivar el botón de guardar si no hay lick
-      document.getElementById('save-lick-btn').disabled = false;
-      document.getElementById('export-lick-btn').disabled = false;
-      
-      // Añadir listener al botón de reproducir
-      document.getElementById('play-lick-btn').addEventListener('click', () => {
-        playLick(randomLick);
-      });
-    }
-    
-    function renderSavedLicks() {
-      const container = document.getElementById('saved-licks-container');
-      container.innerHTML = savedLicks.length > 0 ? '' : '<p class="text-center text-gray-400">No hay licks guardados.</p>';
-      
-      savedLicks.forEach((lick, lickIndex) => {
-        const lickElement = document.createElement('div');
-        lickElement.className = 'bg-gray-800 p-4 rounded-xl flex flex-col md:flex-row md:items-center justify-between shadow-md';
-        lickElement.innerHTML = `
-          <div class="flex-grow" id="saved-lick-content-${lickIndex}">
-            <p class="text-lg font-bold text-teal-300 mb-2">
-              ${lick.root}${SCALE_RELATIONSHIPS[lick.chord].title.slice(1)} Lick
-            </p>
-            <!-- Ajustado para usar flex-row y gap-1 para que se vea como la escala -->
-            <div id="saved-lick-notes-${lickIndex}" class="flex flex-row flex-wrap gap-1">
-              ${lick.notes.map((note, noteIndex) => `
-                <div id="saved-note-${lickIndex}-${noteIndex}" class="flex-1 bg-gray-700 p-2 rounded-lg flex flex-col items-center justify-center border-2 transition-all duration-300 border-transparent">
-                  <span class="font-mono text-xl text-yellow-300">${note}</span>
-                  <span class="text-xs text-gray-400 font-mono">${lick.intervals[noteIndex]}</span>
-                </div>
-              `).join('')}
-            </div>
-          </div>
-          <div class="flex flex-wrap space-x-2 mt-4 md:mt-0 justify-end">
-            <button id="play-saved-lick-btn-${lickIndex}" class="p-3 rounded-full transition-all duration-300 bg-pink-600 hover:bg-pink-700 text-white focus:outline-none focus:ring-2 focus:ring-pink-400">
-              <i data-lucide="play" class="play-icon"></i>
-              <i data-lucide="stop-circle" class="stop-icon hidden"></i>
-            </button>
-            <button id="export-saved-lick-btn-${lickIndex}" class="p-3 bg-blue-600 hover:bg-blue-700 text-white rounded-full transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-400">
-              <i data-lucide="download"></i>
-            </button>
-            <button id="delete-saved-lick-btn-${lickIndex}" class="p-3 bg-red-600 hover:bg-red-700 text-white rounded-full transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-red-400">
-              <i data-lucide="trash-2"></i>
-            </button>
-          </div>
-        `;
-        container.appendChild(lickElement);
+        // Global variables for the app state
+        let activeCourse = 'CMS XX y XXI I';
+        let attendanceData = {};
 
-        // Vuelve a crear los íconos de Lucide
-        lucide.createIcons();
+        // Course configuration
+        const courseConfig = {
+            'CMS XX y XXI I': {
+                students: studentsCursoI,
+                totalHours: 16 * 2,
+                alertHours: 8,
+                alertPercentage: 25,
+                title: "Conceptos de música del siglo XX y XXI I",
+                time: "2:30 p.m. a 4:30 p.m.",
+                professor: "Juan Miguel Rios Redondo"
+            },
+            'CMS XX y XXI II': {
+                students: studentsCursoII,
+                totalHours: 16 * 2,
+                alertHours: 8,
+                alertPercentage: 25,
+                title: "Conceptos de música del siglo XX y XXI II",
+                time: "4:30 p.m. a 6:30 p.m.",
+                professor: "Juan Miguel Rios Redondo"
+            }
+        };
 
-        // Añadir listeners para los botones de reproducir, borrar y exportar
-        document.getElementById(`play-saved-lick-btn-${lickIndex}`).addEventListener('click', () => {
-          playLick(lick.notes, lickIndex);
-        });
-        document.getElementById(`delete-saved-lick-btn-${lickIndex}`).addEventListener('click', () => {
-          deleteSavedLick(lickIndex);
-        });
-        document.getElementById(`export-saved-lick-btn-${lickIndex}`).addEventListener('click', () => {
-          exportLickAsImage(`saved-lick-content-${lickIndex}`);
-        });
-      });
-    }
+        // Function to render the table
+        const renderTable = (scrollPosition = { left: 0, top: 0 }) => {
+            const config = courseConfig[activeCourse];
+            const students = config.students;
+            const data = attendanceData[activeCourse] || {};
+            
+            // Update course title and info
+            courseTitle.textContent = config.title;
+            courseInfo.innerHTML = `<p>Docente: ${config.professor}</p><p>Horario: ${config.time}</p>`;
 
-    // Funciones principales de la aplicación
-    function stopLick() {
-      if (lickSequence) {
-        lickSequence.dispose();
-        lickSequence = null;
-      }
-      isLickPlaying = false;
-      currentPlayingNoteIndex = null;
-      currentLickPlayingIndex = null;
-      Tone.Transport.stop();
-      Tone.Transport.cancel(0);
-      updatePlayButtons();
-      updateHighlightedNotes();
-    }
+            let tableHTML = `
+                <table class="bg-white">
+                    <thead>
+                        <tr>
+                            <th class="rounded-tl-xl">Nombre</th>
+            `;
 
-    function generateLick() {
-      stopLick();
-      const selectedRoot = document.getElementById('root-note').value;
-      const selectedChordType = document.getElementById('chord-type').value;
-      const melodicMinorRootNote = getCorrectlySpelledScaleRoot(selectedRoot, SCALE_RELATIONSHIPS[selectedChordType].offset);
-      const melodicMinorNotes = melodicMinorRootNote ? getCorrectlySpelledNotes(melodicMinorRootNote, MELODIC_MINOR_FORMULA).map(getEnharmonicNote) : [];
-      
-      if (melodicMinorNotes.length === 0) return;
-      
-      const availableNotes = [...melodicMinorNotes];
-      // Obtener el valor del slider para la longitud del lick
-      const lickLength = parseInt(document.getElementById('lick-length-slider').value, 10);
-      
-      randomLick = [];
-      randomLickIntervals = [];
+            // Add headers for each session date
+            classDates.forEach(date => {
+                tableHTML += `<th class="text-center">${date}</th>`;
+            });
 
-      const finalLickLength = Math.min(lickLength, availableNotes.length);
-      
-      for (let i = 0; i < finalLickLength; i++) {
-        const randomIndex = Math.floor(Math.random() * availableNotes.length);
-        const noteName = availableNotes[randomIndex];
-        randomLick.push(noteName);
-        const intervalName = getIntervalName(selectedChordType, selectedRoot, noteName);
-        randomLickIntervals.push(intervalName);
-        availableNotes.splice(randomIndex, 1);
-      }
-      
-      renderRandomLick();
-    }
-    
-    async function playLick(lickToPlay, lickIndex = null) {
-      if (isLickPlaying && currentLickPlayingIndex === lickIndex) {
-        stopLick();
-        return;
-      } else if (isLickPlaying) {
-        stopLick();
-      }
-      
-      if (!synth || lickToPlay.length === 0) return;
-      
-      isLickPlaying = true;
-      currentLickPlayingIndex = lickIndex;
-      updatePlayButtons();
-      await Tone.start();
-      Tone.Transport.start();
+            tableHTML += `
+                            <th class="bg-blue-600 text-white">Total Hrs Ausencia</th>
+                            <th class="bg-blue-600 text-white">% de Ausencia</th>
+                            <th class="bg-blue-600 text-white rounded-tr-xl">
+                                <div style="white-space: normal;">% de Asistencia</div>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
 
-      const sequenceNotes = lickToPlay.map((note, index) => ({ note: `${note}4`, index }));
-      const noteDuration = '8n';
+            // Add rows for each student
+            students.forEach(student => {
+                let totalAbsenceHours = 0;
+                let isAlert = false;
+                let rowContent = '';
 
-      lickSequence = new Tone.Sequence((time, { note, index }) => {
-        currentPlayingNoteIndex = index;
-        updateHighlightedNotes();
-        synth.triggerAttackRelease(note, noteDuration, time);
-      }, sequenceNotes, noteDuration);
-      
-      lickSequence.start(0);
-      Tone.Transport.bpm.value = 120;
-      
-      const totalDuration = Tone.Time(noteDuration).toSeconds() * lickToPlay.length;
-      
-      Tone.Transport.scheduleOnce(() => {
-        console.log('Lick finalizado. Deteniendo la reproducción.');
-        stopLick();
-      }, `+${totalDuration}`);
-    }
+                // Get attendance status for each session
+                classDates.forEach(date => {
+                    const studentData = data[date] && data[date][student] ? data[date][student] : { present: true, tardy: false, absent: false };
+                    
+                    let sessionAbsenceHours = 0;
+                    if (studentData.absent) {
+                        sessionAbsenceHours = 2; // 2 hours for full absence
+                    } else if (studentData.tardy) {
+                        sessionAbsenceHours = 1; // 1 hour for tardy/early leave
+                    }
+                    totalAbsenceHours += sessionAbsenceHours;
 
-    function saveCurrentLick() {
-      if (randomLick.length === 0) return;
-      const newLickToSave = {
-        notes: randomLick,
-        intervals: randomLickIntervals,
-        root: document.getElementById('root-note').value,
-        chord: document.getElementById('chord-type').value
-      };
-      savedLicks.push(newLickToSave);
-      localStorage.setItem('savedMelodicLicks', JSON.stringify(savedLicks));
-      renderSavedLicks();
-    }
+                    rowContent += `
+                        <td>
+                            <div class="attendance-input">
+                                <label>
+                                    <input type="checkbox" name="${student}-${date}"
+                                        onchange="updateAttendance('${activeCourse}', '${date}', '${student}', 'present', this.checked)"
+                                        ${studentData.present ? 'checked' : ''} class="form-checkbox h-4 w-4 text-green-500 rounded focus:ring-green-400"> Presente
+                                </label>
+                                <label>
+                                    <input type="checkbox" name="${student}-${date}"
+                                        onchange="updateAttendance('${activeCourse}', '${date}', '${student}', 'tardy', this.checked)"
+                                        ${studentData.tardy ? 'checked' : ''} class="form-checkbox h-4 w-4 text-yellow-500 rounded focus:ring-yellow-400"> Tarde (1h)
+                                </label>
+                                <label>
+                                    <input type="checkbox" name="${student}-${date}"
+                                        onchange="updateAttendance('${activeCourse}', '${date}', '${student}', 'absent', this.checked)"
+                                        ${studentData.absent ? 'checked' : ''} class="form-checkbox h-4 w-4 text-red-500 rounded focus:ring-red-400"> Falta (2h)
+                                </label>
+                            </div>
+                        </td>
+                    `;
+                });
 
-    function deleteSavedLick(indexToDelete) {
-      if (isLickPlaying && currentLickPlayingIndex === indexToDelete) {
-        stopLick();
-      }
-      savedLicks.splice(indexToDelete, 1);
-      localStorage.setItem('savedMelodicLicks', JSON.stringify(savedLicks));
-      renderSavedLicks();
-    }
+                // Calculate percentage and check for alerts
+                const percentageAbsence = config.totalHours > 0 ? ((totalAbsenceHours / config.totalHours) * 100).toFixed(2) : 0;
+                const percentageAttendance = (100 - percentageAbsence).toFixed(2);
+                if (totalAbsenceHours >= config.alertHours || percentageAbsence >= config.alertPercentage) {
+                    isAlert = true;
+                }
 
-    // Función de exportar como imagen PNG
-    function exportLickAsImage(lickId) {
-      const lickElement = document.getElementById(lickId);
-      if (!lickElement) {
-          console.error(`Elemento con id "${lickId}" no encontrado.`);
-          return;
-      }
-      
-      // html2canvas no captura el fondo del body, por lo que creamos un div temporal
-      const tempWrapper = document.createElement('div');
-      tempWrapper.style.backgroundColor = '#1f2937'; // Color de fondo del body
-      tempWrapper.style.padding = '20px';
-      tempWrapper.style.borderRadius = '1rem';
-      tempWrapper.style.display = 'inline-block';
-      
-      const clone = lickElement.cloneNode(true);
-      clone.style.width = lickElement.offsetWidth + 'px';
-      clone.style.height = lickElement.offsetHeight + 'px';
-      
-      // Aplicar estilos del contenedor
-      const containerStyles = window.getComputedStyle(lickElement.parentElement);
-      clone.style.backgroundColor = containerStyles.backgroundColor;
-      clone.style.padding = containerStyles.padding;
-      clone.style.borderRadius = containerStyles.borderRadius;
-      
-      tempWrapper.appendChild(clone);
-      document.body.appendChild(tempWrapper);
-      
-      html2canvas(tempWrapper, {
-          backgroundColor: '#111827', // Fondo del elemento padre, para que el resultado sea consistente
-          scale: 2 // Escala para una mejor resolución
-      }).then(canvas => {
-          const image = canvas.toDataURL('image/png');
-          const link = document.createElement('a');
-          link.download = `lick-melodico.png`;
-          link.href = image;
-          link.click();
-          tempWrapper.remove();
-      }).catch(err => {
-          console.error('Error al exportar la imagen:', err);
-          tempWrapper.remove();
-      });
-    }
-    
-    // Funciones de actualización de UI
-    function updatePlayButtons() {
-      // Botón del lick aleatorio
-      const playRandomBtn = document.getElementById('play-lick-btn');
-      if (playRandomBtn) {
-        const playIcon = playRandomBtn.querySelector('.play-icon');
-        const stopIcon = playRandomBtn.querySelector('.stop-icon');
-        if (isLickPlaying && currentLickPlayingIndex === null) {
-          playRandomBtn.classList.remove('bg-pink-600', 'hover:bg-pink-700');
-          playRandomBtn.classList.add('bg-red-600', 'hover:bg-red-700');
-          playRandomBtn.childNodes[3].nodeValue = 'Detener Lick';
-          playIcon.classList.add('hidden');
-          stopIcon.classList.remove('hidden');
-        } else {
-          playRandomBtn.classList.remove('bg-red-600', 'hover:bg-red-700');
-          playRandomBtn.classList.add('bg-pink-600', 'hover:bg-pink-700');
-          playRandomBtn.childNodes[3].nodeValue = 'Tocar Lick';
-          playIcon.classList.remove('hidden');
-          stopIcon.classList.add('hidden');
-        }
-      }
+                tableHTML += `
+                    <tr class="${isAlert ? 'alert-row' : ''}">
+                        <td class="font-bold name-col">${student}</td>
+                        ${rowContent}
+                        <td class="font-bold">${totalAbsenceHours}</td>
+                        <td class="font-bold">${percentageAbsence}%</td>
+                        <td class="font-bold">${percentageAttendance}%</td>
+                    </tr>
+                `;
+            });
 
-      // Botones de licks guardados
-      savedLicks.forEach((_, index) => {
-        const playBtn = document.getElementById(`play-saved-lick-btn-${index}`);
-        if (playBtn) {
-          const playIcon = playBtn.querySelector('.play-icon');
-          const stopIcon = playBtn.querySelector('.stop-icon');
-          if (isLickPlaying && currentLickPlayingIndex === index) {
-            playBtn.classList.remove('bg-pink-600', 'hover:bg-pink-700');
-            playBtn.classList.add('bg-red-600', 'hover:bg-red-700');
-            playIcon.classList.add('hidden');
-            stopIcon.classList.remove('hidden');
-          } else {
-            playBtn.classList.remove('bg-red-600', 'hover:bg-red-700');
-            playBtn.classList.add('bg-pink-600', 'hover:bg-pink-700');
-            playIcon.classList.remove('hidden');
-            stopIcon.classList.add('hidden');
-          }
-        }
-      });
-    }
+            tableHTML += `
+                        </tbody>
+                    </table>
+            `;
 
-    function updateHighlightedNotes() {
-      // Limpiar todas las notas
-      document.querySelectorAll('[id^="random-note-"]').forEach(el => {
-        el.classList.remove('border-yellow-300', 'shadow-md', 'shadow-yellow-500', 'animate-pulse');
-        el.classList.add('border-transparent');
-      });
-      document.querySelectorAll('[id^="saved-note-"]').forEach(el => {
-        el.classList.remove('border-yellow-300', 'shadow-md', 'shadow-yellow-500', 'animate-pulse');
-        el.classList.add('border-transparent');
-      });
+            tableContainer.innerHTML = tableHTML;
+            
+            // Restore scroll position after a slight delay
+            setTimeout(() => {
+                tableContainer.scrollLeft = scrollPosition.left;
+                tableContainer.scrollTop = scrollPosition.top;
+            }, 50);
+        };
 
-      // Iluminar la nota actual
-      if (isLickPlaying && currentPlayingNoteIndex !== null) {
-        let noteElement = null;
-        if (currentLickPlayingIndex === null) {
-          noteElement = document.getElementById(`random-note-${currentPlayingNoteIndex}`);
-        } else {
-          noteElement = document.getElementById(`saved-note-${currentLickPlayingIndex}-${currentPlayingNoteIndex}`);
-        }
-        if (noteElement) {
-          noteElement.classList.add('border-yellow-300', 'shadow-md', 'shadow-yellow-500', 'animate-pulse');
-          noteElement.classList.remove('border-transparent');
-        }
-      }
-    }
+        // Save data to localStorage
+        const saveData = () => {
+            try {
+                localStorage.setItem('attendanceData', JSON.stringify(attendanceData));
+                showMessage('Asistencia guardada automáticamente en tu navegador.');
+            } catch (e) {
+                console.error("Error saving to local storage: ", e);
+                showMessage('Error al guardar la asistencia.', 'error');
+            }
+        };
 
-    // Inicialización de la aplicación al cargar la página
-    window.onload = function() {
-      // Inicializar el sintetizador y los efectos de audio
-      synth = new Tone.PolySynth(Tone.FMSynth, {
-        envelope: { attack: 0.05, decay: 0.5, sustain: 0.2, release: 0.1 },
-        oscillator: { type: "sine" }
-      }).toDestination();
-      reverb = new Tone.Reverb({ decay: 3, preDelay: 0.01, wet: 0.3 }).toDestination();
-      chorus = new Tone.Chorus({ frequency: 1.5, delayTime: 3.5, depth: 0.7, type: 'triangle', wet: 0.5 }).toDestination();
-      synth.connect(reverb);
-      synth.connect(chorus);
+        // Load data from localStorage
+        const loadData = () => {
+            try {
+                const savedData = localStorage.getItem('attendanceData');
+                if (savedData) {
+                    attendanceData = JSON.parse(savedData);
+                } else {
+                    attendanceData = {};
+                }
+            } catch (e) {
+                console.error("Error loading from local storage: ", e);
+                attendanceData = {};
+            }
+            renderTable();
+        };
 
-      // Cargar licks guardados de localStorage
-      const storedLicks = localStorage.getItem('savedMelodicLicks');
-      if (storedLicks) {
-        savedLicks = JSON.parse(storedLicks);
-      }
+        // Update attendance data
+        const updateAttendance = (course, date, student, type, checked) => {
+            // Get the current scroll position before re-rendering
+            const scrollPosition = {
+                left: tableContainer.scrollLeft,
+                top: tableContainer.scrollTop
+            };
+            
+            // Ensure data structure exists
+            const currentData = attendanceData[course] || {};
+            const dateData = currentData[date] || {};
+            const studentData = dateData[student] || { present: true, tardy: false, absent: false };
+            
+            // Uncheck other options
+            studentData.present = false;
+            studentData.tardy = false;
+            studentData.absent = false;
+            
+            // Set the new status based on the checked checkbox
+            if (checked) {
+                studentData[type] = true;
+            } else {
+                studentData.present = true; // Default to present if nothing is checked
+            }
 
-      // Llenar los selectores de notas y acordes
-      const rootSelect = document.getElementById('root-note');
-      NOTES.forEach(note => {
-        const option = document.createElement('option');
-        option.value = note;
-        option.textContent = note;
-        rootSelect.appendChild(option);
-      });
+            // Update the local state
+            dateData[student] = studentData;
+            currentData[date] = dateData;
+            attendanceData[course] = currentData;
+            
+            // Save the updated data
+            saveData();
+            // Re-render table and pass the scroll position to restore it
+            renderTable(scrollPosition);
+        };
 
-      const chordSelect = document.getElementById('chord-type');
-      Object.keys(SCALE_RELATIONSHIPS).forEach(type => {
-        const option = document.createElement('option');
-        option.value = type;
-        option.textContent = SCALE_RELATIONSHIPS[type].title;
-        chordSelect.appendChild(option);
-      });
+        window.updateAttendance = updateAttendance;
 
-      // Añadir listeners para los cambios en los selectores
-      rootSelect.addEventListener('change', () => {
-        updateScaleAndChordDisplay(rootSelect.value, chordSelect.value);
-        generateLick();
-      });
-      chordSelect.addEventListener('change', () => {
-        updateScaleAndChordDisplay(rootSelect.value, chordSelect.value);
-        generateLick();
-      });
+        // Switch between courses
+        const switchCourse = (course) => {
+            activeCourse = course;
+            document.getElementById('tab-1').classList.toggle('active', course === 'CMS XX y XXI I');
+            document.getElementById('tab-2').classList.toggle('active', course === 'CMS XX y XXI II');
+            renderTable();
+        };
 
-      // Añadir listeners para el nuevo slider de longitud de lick
-      const lickLengthSlider = document.getElementById('lick-length-slider');
-      const lickLengthValue = document.getElementById('lick-length-value');
-      
-      // Sincronizar el valor inicial
-      lickLengthValue.textContent = lickLengthSlider.value;
+        // Tab functionality
+        document.getElementById('tab-1').addEventListener('click', () => switchCourse('CMS XX y XXI I'));
+        document.getElementById('tab-2').addEventListener('click', () => switchCourse('CMS XX y XXI II'));
 
-      lickLengthSlider.addEventListener('input', () => {
-        lickLengthValue.textContent = lickLengthSlider.value;
-        generateLick(); // Genera un nuevo lick cada vez que se mueve el slider
-      });
-
-      // Añadir listeners para los botones de la sección de lick aleatorio
-      document.getElementById('generate-lick-btn').addEventListener('click', generateLick);
-      document.getElementById('save-lick-btn').addEventListener('click', saveCurrentLick);
-      document.getElementById('export-lick-btn').addEventListener('click', () => {
-          if (randomLick.length > 0) {
-              exportLickAsImage('random-lick-notes-container');
-          }
-      });
-      
-      // Renderizar la UI inicial
-      updateScaleAndChordDisplay(rootSelect.value, chordSelect.value);
-      generateLick();
-      renderSavedLicks();
-    };
-  </script>
+        // Initial load
+        window.onload = loadData;
+    </script>
 </body>
 </html>
+
 
