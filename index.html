@@ -157,17 +157,18 @@
             }).join(' ');
         };
 
-        // Student data for each course
+        // Student data for each course, with enumeration included in the name string
         const studentsCursoI = [
             "ALVARADO POLO, MARCELA", "LEAL JIMENEZ, LUIS", "MARTINEZ GUZMAN, ESTEBAN",
             "NADER ZAPATA, SHAIEL", "RODRIGUEZ GONZALEZ, JESUS", "SANTAMARIA BARRAZA, MIGUEL"
-        ].map(capitalizeWords);
+        ].map((name, index) => `${index + 1}. ${capitalizeWords(name)}`);
+        
         const studentsCursoII = [
             "AGUDELO BALLESTEROS, DANIEL", "APARICIO HOYOS, ESTEBAN", "BATISTA MIRANDA, JHORMAN",
-            "ESCOBAR DE ALBA, ANGEL", "ESPARZA MERCADO, PABLO", "QUINTERO RICARDO, SANTIAGO",
-            "RODRIGUEZ LARA, NATALIA", "ROSERO SAUCEDO, THOMAS", "SUAREZ OVIEDO, CARLOS",
-            "VENDRIES CORREA, SANTIAGO"
-        ].map(capitalizeWords);
+            "EBRATT BONILLA, SANTIAGO", "ESCOBAR DE ALBA, ANGEL", "ESPARZA MERCADO, PABLO",
+            "QUINTERO RICARDO, SANTIAGO", "RODRIGUEZ LARA, NATALIA", "ROSERO SAUCEDO, THOMAS",
+            "SUAREZ OVIEDO, CARLOS", "VENDRIES CORREA, SANTIAGO"
+        ].map((name, index) => `${index + 1}. ${capitalizeWords(name)}`);
         
         // Specific dates for the 16 classes (omitting Oct 8th)
         const classDates = [
@@ -242,8 +243,9 @@
                 let rowContent = '';
 
                 // Get attendance status for each session
+                const studentNameWithoutNumber = student.split('. ')[1];
                 classDates.forEach(date => {
-                    const studentData = data[date] && data[date][student] ? data[date][student] : { present: true, tardy: false, absent: false };
+                    const studentData = data[date] && data[date][studentNameWithoutNumber] ? data[date][studentNameWithoutNumber] : { present: true, tardy: false, absent: false };
                     
                     let sessionAbsenceHours = 0;
                     if (studentData.absent) {
@@ -257,18 +259,18 @@
                         <td>
                             <div class="attendance-input">
                                 <label>
-                                    <input type="checkbox" name="${student}-${date}"
-                                        onchange="updateAttendance('${activeCourse}', '${date}', '${student}', 'present', this.checked)"
+                                    <input type="checkbox" name="${studentNameWithoutNumber}-${date}"
+                                        onchange="updateAttendance('${activeCourse}', '${date}', '${studentNameWithoutNumber}', 'present', this.checked)"
                                         ${studentData.present ? 'checked' : ''} class="form-checkbox h-4 w-4 text-green-500 rounded focus:ring-green-400"> Presente
                                 </label>
                                 <label>
-                                    <input type="checkbox" name="${student}-${date}"
-                                        onchange="updateAttendance('${activeCourse}', '${date}', '${student}', 'tardy', this.checked)"
+                                    <input type="checkbox" name="${studentNameWithoutNumber}-${date}"
+                                        onchange="updateAttendance('${activeCourse}', '${date}', '${studentNameWithoutNumber}', 'tardy', this.checked)"
                                         ${studentData.tardy ? 'checked' : ''} class="form-checkbox h-4 w-4 text-yellow-500 rounded focus:ring-yellow-400"> Tarde (1h)
                                 </label>
                                 <label>
-                                    <input type="checkbox" name="${student}-${date}"
-                                        onchange="updateAttendance('${activeCourse}', '${date}', '${student}', 'absent', this.checked)"
+                                    <input type="checkbox" name="${studentNameWithoutNumber}-${date}"
+                                        onchange="updateAttendance('${activeCourse}', '${date}', '${studentNameWithoutNumber}', 'absent', this.checked)"
                                         ${studentData.absent ? 'checked' : ''} class="form-checkbox h-4 w-4 text-red-500 rounded focus:ring-red-400"> Falta (2h)
                                 </label>
                             </div>
@@ -390,5 +392,4 @@
     </script>
 </body>
 </html>
-
 
