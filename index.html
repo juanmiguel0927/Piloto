@@ -35,7 +35,6 @@
             border-bottom: 1px solid #e5e7eb;
             font-size: 0.875rem;
             white-space: nowrap;
-            background-color: #ffffff; /* Fondo para evitar que el contenido se muestre al hacer scroll */
         }
         th {
             background-color: #4b5563;
@@ -63,14 +62,18 @@
             z-index: 10;
             text-align: left;
             font-weight: bold;
-            background-color: #f9fafb; /* Fondo para que no sea transparente */
             box-shadow: 2px 0 5px -2px rgba(0, 0, 0, 0.1);
         }
         tr:last-child td {
             border-bottom: none;
         }
+        /* Clase para resaltar la fila cuando se cumple la condición de alerta (rojo) */
         .alert-row {
             background-color: #fee2e2;
+        }
+        /* Clase para resaltar la fila cuando se cumple la condición de advertencia (naranja) */
+        .warning-row {
+            background-color: #fef3c7;
         }
         .tab-button {
             padding: 1rem 1.5rem;
@@ -239,8 +242,7 @@
             // Add rows for each student
             students.forEach(student => {
                 let totalAbsenceHours = 0;
-                let isAlert = false;
-                let rowContent = '';
+                let rowContent = ''; 
 
                 // Get attendance status for each session
                 const studentNameWithoutNumber = student.split('. ')[1];
@@ -256,7 +258,7 @@
                     totalAbsenceHours += sessionAbsenceHours;
 
                     rowContent += `
-                        <td>
+                        <td class="bg-white">
                             <div class="attendance-input">
                                 <label>
                                     <input type="checkbox" name="${studentNameWithoutNumber}-${date}"
@@ -278,20 +280,27 @@
                     `;
                 });
 
-                // Calculate percentage and check for alerts
+                // Calculate percentage and determine row class
                 const percentageAbsence = config.totalHours > 0 ? ((totalAbsenceHours / config.totalHours) * 100).toFixed(2) : 0;
                 const percentageAttendance = (100 - percentageAbsence).toFixed(2);
-                if (totalAbsenceHours >= config.alertHours || percentageAbsence >= config.alertPercentage) {
-                    isAlert = true;
+                
+                let rowClass = '';
+                let nameColClass = 'bg-gray-50'; // Default background for the name cell
+                if (totalAbsenceHours >= config.alertHours) {
+                    rowClass = 'alert-row';
+                    nameColClass = 'alert-row';
+                } else if (totalAbsenceHours >= 6) { 
+                    rowClass = 'warning-row';
+                    nameColClass = 'warning-row';
                 }
-
+                
                 tableHTML += `
-                    <tr class="${isAlert ? 'alert-row' : ''}">
-                        <td class="font-bold name-col">${student}</td>
+                    <tr class="bg-white ${rowClass}">
+                        <td class="font-bold name-col ${nameColClass}">${student}</td>
                         ${rowContent}
-                        <td class="font-bold">${totalAbsenceHours}</td>
-                        <td class="font-bold">${percentageAbsence}%</td>
-                        <td class="font-bold">${percentageAttendance}%</td>
+                        <td class="bg-white font-bold">${totalAbsenceHours}</td>
+                        <td class="bg-white font-bold">${percentageAbsence}%</td>
+                        <td class="bg-white font-bold">${percentageAttendance}%</td>
                     </tr>
                 `;
             });
