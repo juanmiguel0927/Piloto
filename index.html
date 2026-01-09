@@ -24,19 +24,17 @@
 
         .cv-container {
             width: 210mm;
-            /* Altura fija para forzar una hoja visualmente en pantalla, 
-               pero permitiendo ajuste en impresión */
             height: 297mm; 
             background: white;
             box-shadow: 0 0 20px rgba(0,0,0,0.5);
             display: flex;
             position: relative;
-            overflow: hidden; /* Mantiene todo dentro de los bordes */
+            overflow: hidden; 
         }
 
         /* Estilos de Impresión */
         @page {
-            margin: 0; /* Elimina márgenes del navegador (quita URL, fecha, etc.) */
+            margin: 0; 
             size: auto;
         }
 
@@ -51,7 +49,7 @@
                 margin: 0;
                 box-shadow: none;
                 width: 100%;
-                height: 100vh; /* Fuerza altura de 1 página */
+                height: 100vh;
                 overflow: hidden;
                 print-color-adjust: exact;
                 -webkit-print-color-adjust: exact;
@@ -65,9 +63,12 @@
             .bg-slate-50 {
                 background-color: #f8fafc !important;
             }
-            /* Ajustes finos para impresión */
             p, li {
                 font-size: 0.85rem !important;
+            }
+            /* Corrección específica para acercar secciones en impresión */
+            .section-spacer {
+                margin-bottom: 1rem !important; /* Fuerza un margen pequeño entre secciones */
             }
         }
     </style>
@@ -77,11 +78,10 @@
     <!-- Controles de Impresión -->
     <div class="no-print fixed top-5 right-5 z-50 flex flex-col items-end gap-2">
         <div class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 shadow-lg rounded max-w-xs mb-2 text-sm">
-            <p class="font-bold">Versión Limpia</p>
-            <p>Sin encabezados ni pies de página automáticos.</p>
+            <p class="font-bold">Ajuste de Espacios</p>
+            <p>Secciones académicas compactadas.</p>
             <p>1. Clic en botón azul.</p>
             <p>2. Elige "Guardar como PDF".</p>
-            <p>3. Activa "Gráficos de fondo".</p>
         </div>
         <button onclick="window.print()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-full shadow-lg flex items-center gap-2 transition-all transform hover:scale-105 cursor-pointer">
             <i class="fas fa-file-pdf"></i> Guardar como PDF
@@ -91,12 +91,10 @@
     <div class="cv-container rounded-none sm:rounded-lg">
         
         <!-- Columna Izquierda (Sidebar) -->
-        <!-- Reduje padding de p-8 a p-6 -->
         <div class="w-1/3 bg-slate-900 text-white p-6 flex flex-col justify-between">
             
             <div>
                 <!-- Foto -->
-                <!-- Reduje tamaño de w-40 a w-32 y margen inferior -->
                 <div class="mb-6 flex justify-center">
                     <div class="w-32 h-32 bg-slate-700 rounded-full flex items-center justify-center overflow-hidden border-4 border-slate-600 shadow-xl relative">
                         <i class="fas fa-user text-5xl text-slate-400"></i>
@@ -171,27 +169,26 @@
         </div>
 
         <!-- Columna Derecha (Contenido Principal) -->
-        <!-- Reduje padding de p-10 a p-8 -->
         <div class="w-2/3 p-8 bg-white flex flex-col">
             
             <!-- Encabezado -->
-            <div class="mb-5">
+            <div class="mb-4 section-spacer">
                 <h1 class="text-3xl font-bold text-slate-900 mb-1 uppercase leading-tight">Edwin Esneider <br> <span class="text-blue-700">Ortiz Garcia</span></h1>
                 <h2 class="text-base text-slate-600 font-semibold mt-1 bg-blue-50 inline-block px-2 py-0.5 rounded">Tecnólogo en Gestión del Mantenimiento Automotriz</h2>
             </div>
 
             <!-- Perfil Profesional -->
-            <div class="mb-5">
+            <div class="mb-4 section-spacer">
                 <p class="text-gray-600 leading-snug text-justify text-xs">
                     Tecnólogo en Gestión del Mantenimiento de Automotores con experiencia práctica certificada en <strong>Organización Equitel</strong>. Cuento con sólida formación en mantenimiento preventivo, sistemas de dirección y suspensión, y manejo de software de gestión. Me caracterizo por mi eficiencia operativa, manejo seguro de herramientas industriales y una fuerte orientación al servicio. Busco aportar mis competencias técnicas y disciplina laboral para optimizar los procesos de mantenimiento en su organización.
                 </p>
             </div>
 
-            <hr class="border-gray-200 my-4">
+            <hr class="border-gray-200 my-3">
 
             <!-- Experiencia Laboral -->
-            <div class="mb-5">
-                <div class="flex items-center gap-2 mb-3">
+            <div class="mb-4 section-spacer">
+                <div class="flex items-center gap-2 mb-2">
                     <div class="p-1.5 bg-blue-100 rounded text-blue-700">
                         <i class="fas fa-briefcase text-sm"></i>
                     </div>
@@ -211,9 +208,9 @@
                 </div>
             </div>
 
-            <!-- Formación Académica -->
-            <div class="mb-5">
-                <div class="flex items-center gap-2 mb-3">
+            <!-- Formación Académica (Espacio ajustado) -->
+            <div class="mb-4 section-spacer">
+                <div class="flex items-center gap-2 mb-2">
                     <div class="p-1.5 bg-blue-100 rounded text-blue-700">
                         <i class="fas fa-graduation-cap text-sm"></i>
                     </div>
@@ -231,9 +228,9 @@
                 </div>
             </div>
 
-            <!-- Cursos y Certificaciones (OPTIMIZADO: 2 COLUMNAS) -->
-            <div class="mt-auto">
-                <div class="flex items-center gap-2 mb-3">
+            <!-- Cursos y Certificaciones (Sin espacio 'auto', pegado a lo anterior) -->
+            <div>
+                <div class="flex items-center gap-2 mb-2">
                     <div class="p-1.5 bg-blue-100 rounded text-blue-700">
                         <i class="fas fa-certificate text-sm"></i>
                     </div>
