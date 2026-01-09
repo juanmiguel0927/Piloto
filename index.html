@@ -35,6 +35,11 @@
         }
 
         /* Estilos de Impresión */
+        @page {
+            margin: 0; /* Elimina márgenes del navegador (quita URL, fecha, etc.) */
+            size: auto;
+        }
+
         @media print {
             body {
                 background: white;
@@ -72,11 +77,11 @@
     <!-- Controles de Impresión -->
     <div class="no-print fixed top-5 right-5 z-50 flex flex-col items-end gap-2">
         <div class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 shadow-lg rounded max-w-xs mb-2 text-sm">
-            <p class="font-bold">Versión 1 Página</p>
-            <p>Diseño compactado.</p>
+            <p class="font-bold">Versión Limpia</p>
+            <p>Sin encabezados ni pies de página automáticos.</p>
             <p>1. Clic en botón azul.</p>
             <p>2. Elige "Guardar como PDF".</p>
-            <p>3. Verifica que diga "1 página".</p>
+            <p>3. Activa "Gráficos de fondo".</p>
         </div>
         <button onclick="window.print()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-full shadow-lg flex items-center gap-2 transition-all transform hover:scale-105 cursor-pointer">
             <i class="fas fa-file-pdf"></i> Guardar como PDF
