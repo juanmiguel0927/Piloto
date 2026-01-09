@@ -3,402 +3,241 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lista de Asistencia - Cursos</title>
-    <!-- Tailwind CSS for styling -->
+    <title>Hoja de Vida - Edwin Ortiz</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&family=Open+Sans:wght@400;600&display=swap');
+        
         body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f3f4f6;
-            color: #1f2937;
-        }
-        .container {
-            max-width: 95%;
-            margin: auto;
-        }
-        /* Contenedor principal de la tabla con scroll horizontal y vertical */
-        .table-container {
-            max-height: 80vh; /* Permite desplazamiento vertical si la tabla es muy larga */
-            overflow: auto;
-            border-radius: 0.5rem;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-        }
-        table {
-            width: 100%;
-            min-width: 1200px; /* Asegura el scroll horizontal en pantallas pequeñas */
-            border-collapse: separate;
-            border-spacing: 0;
-        }
-        th, td {
-            padding: 0.75rem;
-            text-align: center;
-            border-bottom: 1px solid #e5e7eb;
-            font-size: 0.875rem;
-            white-space: nowrap;
-        }
-        th {
-            background-color: #4b5563;
-            color: #ffffff;
-            font-weight: 600;
-            vertical-align: top;
-        }
-        /* La fila de encabezados se mantiene fija en la parte superior */
-        thead tr th {
-            position: sticky;
-            top: 0;
-            z-index: 20;
-            background-color: #4b5563; /* Fondo para que no sea transparente */
-        }
-        /* La celda de la esquina superior izquierda se fija en ambas direcciones */
-        thead th:first-child {
-            left: 0;
-            z-index: 21;
-            box-shadow: 2px 0 5px -2px rgba(0, 0, 0, 0.1); /* Sombra para resaltar */
-        }
-        /* La primera columna de datos se mantiene fija a la izquierda */
-        tbody tr td:first-child {
-            position: sticky;
-            left: 0;
-            z-index: 10;
-            text-align: left;
-            font-weight: bold;
-            box-shadow: 2px 0 5px -2px rgba(0, 0, 0, 0.1);
-        }
-        tr:last-child td {
-            border-bottom: none;
-        }
-        /* Clase para resaltar la fila cuando se cumple la condición de alerta (rojo) */
-        .alert-row {
-            background-color: #fee2e2;
-        }
-        /* Clase para resaltar la fila cuando se cumple la condición de advertencia (naranja) */
-        .warning-row {
-            background-color: #fef3c7;
-        }
-        .tab-button {
-            padding: 1rem 1.5rem;
-            border-radius: 0.5rem 0.5rem 0 0;
-            font-weight: 600;
-            transition: all 0.2s ease;
-        }
-        .tab-button.active {
-            background-color: #4b5563;
-            color: #ffffff;
-        }
-        .tab-button:not(.active) {
-            background-color: #d1d5db;
-            color: #4b5563;
-        }
-        .attendance-input {
+            font-family: 'Open Sans', sans-serif;
+            background-color: #555;
+            margin: 0;
+            padding: 20px;
             display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 0.25rem;
-            padding: 0.25rem 0;
+            justify-content: center;
         }
-        .attendance-input label {
+        
+        h1, h2, h3 {
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        .cv-container {
+            width: 210mm;
+            min-height: 297mm;
+            background: white;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
             display: flex;
-            align-items: center;
-            gap: 0.5rem;
+            position: relative;
         }
-        .message-box {
-            position: fixed;
-            bottom: 1rem;
-            right: 1rem;
-            background-color: #4CAF50;
-            color: white;
-            padding: 1rem;
-            border-radius: 0.5rem;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            transition: opacity 0.3s ease;
+
+        /* Estilos de Impresión */
+        @media print {
+            body {
+                background: white;
+                margin: 0;
+                padding: 0;
+                display: block;
+            }
+            .cv-container {
+                margin: 0;
+                box-shadow: none;
+                width: 100%;
+                min-height: 100vh;
+                height: auto;
+                overflow: visible !important;
+                print-color-adjust: exact;
+                -webkit-print-color-adjust: exact;
+            }
+            .no-print {
+                display: none !important;
+            }
+            .bg-slate-900 {
+                background-color: #0f172a !important;
+            }
+            .bg-slate-50 {
+                background-color: #f8fafc !important;
+            }
         }
     </style>
 </head>
-<body class="bg-gray-100 p-4 sm:p-8">
-    <div class="container max-w-screen-2xl bg-white shadow-xl rounded-xl p-4 sm:p-8 mt-4">
-        <h1 class="text-3xl sm:text-4xl font-bold text-center mb-6 text-gray-800">Control de Asistencia de Clases</h1>
+<body class="text-gray-800">
 
-        <!-- Tab Navigation -->
-        <div class="flex justify-center mb-8">
-            <button id="tab-1" class="tab-button active">CMS XX y XXI I</button>
-            <button id="tab-2" class="tab-button">CMS XX y XXI II</button>
+    <!-- Controles de Impresión -->
+    <div class="no-print fixed top-5 right-5 z-50 flex flex-col items-end gap-2">
+        <div class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 shadow-lg rounded max-w-xs mb-2 text-sm">
+            <p class="font-bold">Datos Actualizados</p>
+            <p>Se incluyó Equitel y certificaciones SENA.</p>
+            <p>1. Clic en botón azul.</p>
+            <p>2. Elige "Guardar como PDF".</p>
+            <p>3. Activa "Gráficos de fondo".</p>
         </div>
-        
-        <h2 id="courseTitle" class="text-2xl font-bold text-center mb-2 text-gray-700"></h2>
-        <div id="courseInfo" class="text-center text-gray-600 mb-4"></div>
-
-        <!-- Attendance Table -->
-        <div id="attendanceTableContainer" class="table-container">
-            <!-- Table will be rendered here by JavaScript -->
-        </div>
-        
-        <!-- Message box for user notifications -->
-        <div id="message-box" class="hidden message-box"></div>
+        <button onclick="window.print()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-full shadow-lg flex items-center gap-2 transition-all transform hover:scale-105 cursor-pointer">
+            <i class="fas fa-file-pdf"></i> Guardar como PDF
+        </button>
     </div>
 
-    <script>
-        // UI Elements
-        const tableContainer = document.getElementById('attendanceTableContainer');
-        const messageBox = document.getElementById('message-box');
-        const courseTitle = document.getElementById('courseTitle');
-        const courseInfo = document.getElementById('courseInfo');
-
-        // Show a message to the user
-        const showMessage = (text, type = 'success') => {
-            messageBox.textContent = text;
-            messageBox.style.backgroundColor = type === 'success' ? '#4CAF50' : '#f44336';
-            messageBox.classList.remove('hidden');
-            setTimeout(() => {
-                messageBox.classList.add('hidden');
-            }, 3000);
-        };
+    <div class="cv-container rounded-none sm:rounded-lg">
         
-        // Function to format names
-        const capitalizeWords = (str) => {
-            return str.toLowerCase().split(' ').map(word => {
-                return word.charAt(0).toUpperCase() + word.slice(1);
-            }).join(' ');
-        };
-
-        // Student data for each course, with enumeration included in the name string
-        const studentsCursoI = [
-            "ALVARADO POLO, MARCELA", "LEAL JIMENEZ, LUIS", "MARTINEZ GUZMAN, ESTEBAN",
-            "NADER ZAPATA, SHAIEL", "RODRIGUEZ GONZALEZ, JESUS", "SANTAMARIA BARRAZA, MIGUEL"
-        ].map((name, index) => `${index + 1}. ${capitalizeWords(name)}`);
-        
-        const studentsCursoII = [
-            "AGUDELO BALLESTEROS, DANIEL", "APARICIO HOYOS, ESTEBAN", "BATISTA MIRANDA, JHORMAN",
-            "EBRATT BONILLA, SANTIAGO", "ESCOBAR DE ALBA, ANGEL", "ESPARZA MERCADO, PABLO",
-            "QUINTERO RICARDO, SANTIAGO", "RODRIGUEZ LARA, NATALIA", "ROSERO SAUCEDO, THOMAS",
-            "SUAREZ OVIEDO, CARLOS", "VENDRIES CORREA, SANTIAGO"
-        ].map((name, index) => `${index + 1}. ${capitalizeWords(name)}`);
-        
-        // Specific dates for the 16 classes (omitting Oct 8th)
-        const classDates = [
-            "30-Jul", "06-Ago", "13-Ago", "20-Ago", "27-Ago", "03-Sep",
-            "10-Sep", "17-Sep", "24-Sep", "01-Oct", "15-Oct", "22-Oct",
-            "29-Oct", "05-Nov", "12-Nov", "19-Nov"
-        ];
-
-        // Global variables for the app state
-        let activeCourse = 'CMS XX y XXI I';
-        let attendanceData = {};
-
-        // Course configuration
-        const courseConfig = {
-            'CMS XX y XXI I': {
-                students: studentsCursoI,
-                totalHours: 16 * 2,
-                alertHours: 8,
-                alertPercentage: 25,
-                title: "Conceptos de música del siglo XX y XXI I",
-                time: "2:30 p.m. a 4:30 p.m.",
-                professor: "Juan Miguel Rios Redondo"
-            },
-            'CMS XX y XXI II': {
-                students: studentsCursoII,
-                totalHours: 16 * 2,
-                alertHours: 8,
-                alertPercentage: 25,
-                title: "Conceptos de música del siglo XX y XXI II",
-                time: "4:30 p.m. a 6:30 p.m.",
-                professor: "Juan Miguel Rios Redondo"
-            }
-        };
-
-        // Function to render the table
-        const renderTable = (scrollPosition = { left: 0, top: 0 }) => {
-            const config = courseConfig[activeCourse];
-            const students = config.students;
-            const data = attendanceData[activeCourse] || {};
+        <!-- Columna Izquierda (Sidebar) -->
+        <div class="w-1/3 bg-slate-900 text-white p-8 flex flex-col">
             
-            // Update course title and info
-            courseTitle.textContent = config.title;
-            courseInfo.innerHTML = `<p>Docente: ${config.professor}</p><p>Horario: ${config.time}</p>`;
+            <!-- Foto -->
+            <div class="mb-8 flex justify-center">
+                <div class="w-40 h-40 bg-slate-700 rounded-full flex items-center justify-center overflow-hidden border-4 border-slate-600 shadow-xl relative">
+                    <i class="fas fa-user text-6xl text-slate-400"></i>
+                    <div class="no-print absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 text-xs text-center p-2 opacity-0 hover:opacity-100 transition-opacity">
+                        Pegar foto aquí
+                    </div>
+                </div>
+            </div>
 
-            let tableHTML = `
-                <table class="bg-white">
-                    <thead>
-                        <tr>
-                            <th class="rounded-tl-xl">Nombre</th>
-            `;
-
-            // Add headers for each session date
-            classDates.forEach(date => {
-                tableHTML += `<th class="text-center">${date}</th>`;
-            });
-
-            tableHTML += `
-                            <th class="bg-blue-600 text-white">Total Hrs Ausencia</th>
-                            <th class="bg-blue-600 text-white">% de Ausencia</th>
-                            <th class="bg-blue-600 text-white rounded-tr-xl">
-                                <div style="white-space: normal;">% de Asistencia</div>
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody>
-            `;
-
-            // Add rows for each student
-            students.forEach(student => {
-                let totalAbsenceHours = 0;
-                let rowContent = ''; 
-
-                // Get attendance status for each session
-                const studentNameWithoutNumber = student.split('. ')[1];
-                classDates.forEach(date => {
-                    const studentData = data[date] && data[date][studentNameWithoutNumber] ? data[date][studentNameWithoutNumber] : { present: true, tardy: false, absent: false };
-                    
-                    let sessionAbsenceHours = 0;
-                    if (studentData.absent) {
-                        sessionAbsenceHours = 2; // 2 hours for full absence
-                    } else if (studentData.tardy) {
-                        sessionAbsenceHours = 1; // 1 hour for tardy/early leave
-                    }
-                    totalAbsenceHours += sessionAbsenceHours;
-
-                    rowContent += `
-                        <td class="bg-white">
-                            <div class="attendance-input">
-                                <label>
-                                    <input type="checkbox" name="${studentNameWithoutNumber}-${date}"
-                                        onchange="updateAttendance('${activeCourse}', '${date}', '${studentNameWithoutNumber}', 'present', this.checked)"
-                                        ${studentData.present ? 'checked' : ''} class="form-checkbox h-4 w-4 text-green-500 rounded focus:ring-green-400"> Presente
-                                </label>
-                                <label>
-                                    <input type="checkbox" name="${studentNameWithoutNumber}-${date}"
-                                        onchange="updateAttendance('${activeCourse}', '${date}', '${studentNameWithoutNumber}', 'tardy', this.checked)"
-                                        ${studentData.tardy ? 'checked' : ''} class="form-checkbox h-4 w-4 text-yellow-500 rounded focus:ring-yellow-400"> Tarde (1h)
-                                </label>
-                                <label>
-                                    <input type="checkbox" name="${studentNameWithoutNumber}-${date}"
-                                        onchange="updateAttendance('${activeCourse}', '${date}', '${studentNameWithoutNumber}', 'absent', this.checked)"
-                                        ${studentData.absent ? 'checked' : ''} class="form-checkbox h-4 w-4 text-red-500 rounded focus:ring-red-400"> Falta (2h)
-                                </label>
-                            </div>
-                        </td>
-                    `;
-                });
-
-                // Calculate percentage and determine row class
-                const percentageAbsence = config.totalHours > 0 ? ((totalAbsenceHours / config.totalHours) * 100).toFixed(2) : 0;
-                const percentageAttendance = (100 - percentageAbsence).toFixed(2);
+            <!-- Contacto -->
+            <div class="mb-8">
+                <h3 class="text-blue-400 font-bold uppercase tracking-wider mb-4 border-b border-slate-700 pb-2">Contacto</h3>
                 
-                let rowClass = '';
-                let nameColClass = 'bg-gray-50'; // Default background for the name cell
-                if (totalAbsenceHours >= config.alertHours) {
-                    rowClass = 'alert-row';
-                    nameColClass = 'alert-row';
-                } else if (totalAbsenceHours >= 6) { 
-                    rowClass = 'warning-row';
-                    nameColClass = 'warning-row';
-                }
+                <div class="flex items-center gap-3 mb-3 text-sm">
+                    <div class="w-8 flex justify-center"><i class="fas fa-phone text-blue-400"></i></div>
+                    <span>324 511 8311</span>
+                </div>
                 
-                tableHTML += `
-                    <tr class="bg-white ${rowClass}">
-                        <td class="font-bold name-col ${nameColClass}">${student}</td>
-                        ${rowContent}
-                        <td class="bg-white font-bold">${totalAbsenceHours}</td>
-                        <td class="bg-white font-bold">${percentageAbsence}%</td>
-                        <td class="bg-white font-bold">${percentageAttendance}%</td>
-                    </tr>
-                `;
-            });
+                <div class="flex items-center gap-3 mb-3 text-sm">
+                    <div class="w-8 flex justify-center"><i class="fas fa-envelope text-blue-400"></i></div>
+                    <span class="break-all" style="font-size: 0.85rem;">ortizedwin1605@gmail.com</span>
+                </div>
+                
+                <div class="flex items-center gap-3 mb-3 text-sm">
+                    <div class="w-8 flex justify-center"><i class="fas fa-map-marker-alt text-blue-400"></i></div>
+                    <span>Palmera del Caribe 1<br>Cl. 130 #9-87<br>Barranquilla, Atlántico</span>
+                </div>
+            </div>
 
-            tableHTML += `
-                        </tbody>
-                    </table>
-            `;
+            <!-- Habilidades -->
+            <div class="mb-8">
+                <h3 class="text-blue-400 font-bold uppercase tracking-wider mb-4 border-b border-slate-700 pb-2">Habilidades</h3>
+                <ul class="space-y-3 text-sm">
+                    <li class="flex items-start gap-2">
+                        <i class="fas fa-check-circle text-blue-500 mt-1"></i>
+                        <span>Gestión de Mantenimiento</span>
+                    </li>
+                    <li class="flex items-start gap-2">
+                        <i class="fas fa-check-circle text-blue-500 mt-1"></i>
+                        <span>Mecánica Industrial y Automotriz</span>
+                    </li>
+                    <li class="flex items-start gap-2">
+                        <i class="fas fa-check-circle text-blue-500 mt-1"></i>
+                        <span>Sistemas de Dirección y Suspensión</span>
+                    </li>
+                    <li class="flex items-start gap-2">
+                        <i class="fas fa-check-circle text-blue-500 mt-1"></i>
+                        <span>Servicio al Cliente</span>
+                    </li>
+                    <li class="flex items-start gap-2">
+                        <i class="fas fa-check-circle text-blue-500 mt-1"></i>
+                        <span>Software de Gestión (CMMS)</span>
+                    </li>
+                </ul>
+            </div>
 
-            tableContainer.innerHTML = tableHTML;
+            <!-- Documento -->
+            <div class="mt-auto pt-4 border-t border-slate-800 text-xs text-slate-400">
+                <p>C.C. 1.143.157.343</p>
+                <p>Barranquilla, Colombia</p>
+            </div>
+
+        </div>
+
+        <!-- Columna Derecha (Contenido Principal) -->
+        <div class="w-2/3 p-10 bg-white">
             
-            // Restore scroll position after a slight delay
-            setTimeout(() => {
-                tableContainer.scrollLeft = scrollPosition.left;
-                tableContainer.scrollTop = scrollPosition.top;
-            }, 50);
-        };
+            <!-- Encabezado -->
+            <div class="mb-8">
+                <h1 class="text-4xl font-bold text-slate-900 mb-2 uppercase leading-tight">Edwin Esneider <br> <span class="text-blue-700">Ortiz Garcia</span></h1>
+                <h2 class="text-lg text-slate-600 font-semibold mt-2 bg-blue-50 inline-block px-3 py-1 rounded">Tecnólogo en Gestión del Mantenimiento Automotriz</h2>
+            </div>
 
-        // Save data to localStorage
-        const saveData = () => {
-            try {
-                localStorage.setItem('attendanceData', JSON.stringify(attendanceData));
-                showMessage('Asistencia guardada automáticamente en tu navegador.');
-            } catch (e) {
-                console.error("Error saving to local storage: ", e);
-                showMessage('Error al guardar la asistencia.', 'error');
-            }
-        };
+            <!-- Perfil Profesional -->
+            <div class="mb-8">
+                <p class="text-gray-600 leading-relaxed text-justify text-sm">
+                    Tecnólogo en Gestión del Mantenimiento de Automotores con experiencia práctica certificada en <strong>Organización Equitel</strong>. Cuento con sólida formación en mantenimiento preventivo, sistemas de dirección y suspensión, y manejo de software de gestión. Me caracterizo por mi eficiencia operativa, manejo seguro de herramientas industriales y una fuerte orientación al servicio. Busco aportar mis competencias técnicas y disciplina laboral para optimizar los procesos de mantenimiento en su organización.
+                </p>
+            </div>
 
-        // Load data from localStorage
-        const loadData = () => {
-            try {
-                const savedData = localStorage.getItem('attendanceData');
-                if (savedData) {
-                    attendanceData = JSON.parse(savedData);
-                } else {
-                    attendanceData = {};
-                }
-            } catch (e) {
-                console.error("Error loading from local storage: ", e);
-                attendanceData = {};
-            }
-            renderTable();
-        };
+            <hr class="border-gray-200 my-6">
 
-        // Update attendance data
-        const updateAttendance = (course, date, student, type, checked) => {
-            // Get the current scroll position before re-rendering
-            const scrollPosition = {
-                left: tableContainer.scrollLeft,
-                top: tableContainer.scrollTop
-            };
-            
-            // Ensure data structure exists
-            const currentData = attendanceData[course] || {};
-            const dateData = currentData[date] || {};
-            const studentData = dateData[student] || { present: true, tardy: false, absent: false };
-            
-            // Uncheck other options
-            studentData.present = false;
-            studentData.tardy = false;
-            studentData.absent = false;
-            
-            // Set the new status based on the checked checkbox
-            if (checked) {
-                studentData[type] = true;
-            } else {
-                studentData.present = true; // Default to present if nothing is checked
-            }
+            <!-- Experiencia Laboral (NUEVA SECCIÓN) -->
+            <div class="mb-8">
+                <div class="flex items-center gap-3 mb-5">
+                    <div class="p-2 bg-blue-100 rounded-lg text-blue-700">
+                        <i class="fas fa-briefcase text-xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-slate-800 uppercase">Experiencia Laboral</h3>
+                </div>
 
-            // Update the local state
-            dateData[student] = studentData;
-            currentData[date] = dateData;
-            attendanceData[course] = currentData;
-            
-            // Save the updated data
-            saveData();
-            // Re-render table and pass the scroll position to restore it
-            renderTable(scrollPosition);
-        };
+                <div class="relative pl-6 border-l-2 border-blue-200">
+                    <div class="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-blue-600 border-4 border-white"></div>
+                    <h4 class="text-lg font-bold text-slate-800">Aprendiz SENA - Unidad Ingenergia O&M</h4>
+                    <p class="text-blue-700 font-semibold text-sm mb-1">ORGANIZACIÓN EQUITEL (Equipos Técnicos y Logística S.A.)</p>
+                    <p class="text-xs text-gray-400 mb-2 uppercase tracking-wide"><i class="far fa-calendar-alt mr-1"></i> Jun 2025 - Ene 2026</p>
+                    <ul class="list-disc list-outside ml-4 text-gray-600 text-sm space-y-1">
+                        <li>Ejecución de labores de mantenimiento preventivo y correctivo en equipos automotrices e industriales.</li>
+                        <li>Apoyo en la gestión operativa y técnica bajo estándares de calidad.</li>
+                        <li>Aplicación de conocimientos en mecánica y seguridad industrial en entorno real.</li>
+                    </ul>
+                </div>
+            </div>
 
-        window.updateAttendance = updateAttendance;
+            <!-- Formación Académica -->
+            <div class="mb-6">
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="p-2 bg-blue-100 rounded-lg text-blue-700">
+                        <i class="fas fa-graduation-cap text-xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-slate-800 uppercase">Formación Académica</h3>
+                </div>
 
-        // Switch between courses
-        const switchCourse = (course) => {
-            activeCourse = course;
-            document.getElementById('tab-1').classList.toggle('active', course === 'CMS XX y XXI I');
-            document.getElementById('tab-2').classList.toggle('active', course === 'CMS XX y XXI II');
-            renderTable();
-        };
+                <div class="mb-4">
+                    <h4 class="text-md font-bold text-slate-800">Tecnólogo en Gestión del Mantenimiento de Automotores</h4>
+                    <p class="text-sm text-gray-600">SENA - Servicio Nacional de Aprendizaje | <span class="italic">Finalizado 2026</span></p>
+                </div>
+                
+                <div>
+                    <h4 class="text-md font-bold text-slate-800">Bachiller Académico</h4>
+                    <p class="text-sm text-gray-600">Corporación Técnica de Colombia (CTC) | <span class="italic">2014</span></p>
+                </div>
+            </div>
 
-        // Tab functionality
-        document.getElementById('tab-1').addEventListener('click', () => switchCourse('CMS XX y XXI I'));
-        document.getElementById('tab-2').addEventListener('click', () => switchCourse('CMS XX y XXI II'));
+            <!-- Cursos y Certificaciones (ACTUALIZADO) -->
+            <div class="mb-4">
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="p-2 bg-blue-100 rounded-lg text-blue-700">
+                        <i class="fas fa-certificate text-xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-slate-800 uppercase">Certificaciones SENA</h3>
+                </div>
 
-        // Initial load
-        window.onload = loadData;
-    </script>
+                <div class="grid grid-cols-1 gap-3">
+                    <div class="bg-slate-50 p-3 rounded border border-slate-100">
+                        <p class="font-bold text-sm text-slate-800">Mantenimiento de Sistemas de Dirección y Suspensión</p>
+                        <p class="text-xs text-gray-500">48 Horas | Dic 2024</p>
+                    </div>
+                    <div class="bg-slate-50 p-3 rounded border border-slate-100">
+                        <p class="font-bold text-sm text-slate-800">Mantenimiento Preventivo de Vehículos Automotores</p>
+                        <p class="text-xs text-gray-500">48 Horas | Dic 2024</p>
+                    </div>
+                    <div class="bg-slate-50 p-3 rounded border border-slate-100">
+                        <p class="font-bold text-sm text-slate-800">Manejo Seguro de Herramientas de Mecánica Industrial</p>
+                        <p class="text-xs text-gray-500">144 Horas | Dic 2024</p>
+                    </div>
+                    <div class="bg-slate-50 p-3 rounded border border-slate-100">
+                        <p class="font-bold text-sm text-slate-800">Manejo de Software para Gestión de Mantenimiento</p>
+                        <p class="text-xs text-gray-500">40 Horas | Jun 2024</p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
 </body>
 </html>
-
