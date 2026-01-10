@@ -66,6 +66,10 @@
         }
         .dark .tab-btn:not(.active) { color: #94a3b8; }
         .dark .tab-btn:not(.active):hover { color: #cbd5e1; }
+        
+        /* Hide Scrollbar */
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800 font-sans pb-12 transition-colors duration-300 dark:bg-slate-950 dark:text-slate-200">
@@ -106,7 +110,10 @@
                     Hábitos Atómicos
                 </button>
                 <button onclick="switchBook('cosasBuenas')" id="tab-cosasBuenas" class="tab-btn pb-3 px-1 text-sm whitespace-nowrap transition-colors">
-                    Cómo hacer que te pasen cosas buenas
+                    Cosas Buenas
+                </button>
+                <button onclick="switchBook('sieteHabitos')" id="tab-sieteHabitos" class="tab-btn pb-3 px-1 text-sm whitespace-nowrap transition-colors">
+                    7 Hábitos
                 </button>
             </div>
         </div>
@@ -246,6 +253,40 @@
                         { id: 109, title: "9. Tu mejor versión", start: "07:11:47", end: "07:34:53" }
                     ]}
                 ]
+            },
+            sieteHabitos: {
+                title: "Los 7 Hábitos de la Gente Altamente Efectiva",
+                author: "Stephen R. Covey",
+                videoId: "SXaY1Bz8Ndk", // Video por defecto (Parte 1)
+                quotes: [
+                    "Siembra un pensamiento, cosecha una acción; siembra una acción, cosecha un hábito.",
+                    "Lo que más importa no debe estar a merced de lo que menos importa.",
+                    "Busca primero entender, luego ser entendido.",
+                    "La victoria privada precede a la victoria pública.",
+                    "No soy producto de mis circunstancias, soy producto de mis decisiones."
+                ],
+                sections: [
+                    // Parte 1 (Video ID SXaY1Bz8Ndk implícito)
+                    { title: "Parte 1: Victoria Privada", items: [
+                        { id: 200, title: "Introducción y Paradigmas", start: "00:00:22", end: "00:23:24" },
+                        { id: 201, title: "Panorama General de los 7 Hábitos", start: "00:23:24", end: "00:36:25" },
+                        { id: 202, title: "Principios y Paradigmas", start: "00:36:25", end: "01:14:16" },
+                        { id: 203, title: "Efectividad y Balance P/CP", start: "01:14:16", end: "01:26:57" },
+                        { id: 204, title: "La Cuenta Bancaria Emocional", start: "01:26:57", end: "01:42:48" },
+                        { id: 205, title: "Hábito 1: Ser Proactivo", start: "01:42:48", end: "02:10:10" },
+                        { id: 206, title: "Círculo de Influencia", start: "02:10:10", end: "02:38:33" },
+                        { id: 207, title: "Hábito 2: Comenzar con un Fin en Mente", start: "02:38:33", end: "03:22:04" },
+                        { id: 208, title: "Hábito 3: Poner Primero lo Primero", start: "03:22:04", end: "04:01:39" }
+                    ]},
+                    // Parte 2 (Requiere Video ID específico)
+                    { title: "Parte 2: Victoria Pública", items: [
+                        { id: 209, title: "Hábito 4: Pensar Ganar-Ganar", start: "00:00:24", end: "00:51:31", videoId: "-ucQ4gG25GY" },
+                        { id: 210, title: "Hábito 5: Buscar Primero Entender", start: "00:51:31", end: "01:35:55", videoId: "-ucQ4gG25GY" },
+                        { id: 211, title: "Hábito 6: Sinergizar", start: "01:35:55", end: "02:24:05", videoId: "-ucQ4gG25GY" },
+                        { id: 212, title: "Hábito 7: Afilar la Sierra", start: "02:24:05", end: "02:48:07", videoId: "-ucQ4gG25GY" },
+                        { id: 213, title: "Conclusión y Reprogramación", start: "02:48:07", end: "03:01:50", videoId: "-ucQ4gG25GY" }
+                    ]}
+                ]
             }
         };
 
@@ -380,6 +421,8 @@
                     const durationStr = formatDuration(getItemDuration(item));
                     const startSeconds = parseTimeStr(item.start);
                     const endSeconds = parseTimeStr(item.end);
+                    // Lógica para video personalizado (Multi-video support)
+                    const videoIdParam = item.videoId ? `'${item.videoId}'` : 'null';
 
                     let isNextUp = false;
                     if (!isCompleted && !firstUncompletedFound) {
@@ -415,7 +458,7 @@
                             </div>
                         </div>
 
-                        <button onclick="openVideo('${item.start}', '${item.end}'); event.stopPropagation();" 
+                        <button onclick="openVideo('${item.start}', '${item.end}', ${videoIdParam}); event.stopPropagation();" 
                                 class="ml-4 p-2 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 rounded-full hover:bg-amber-500 dark:hover:bg-amber-600 hover:text-white transition-all shadow-sm group-hover:shadow-md flex items-center gap-2"
                                 title="Ver en YouTube">
                             <i data-lucide="play" class="w-4 h-4 fill-current"></i>
@@ -433,10 +476,12 @@
         }
 
         // --- Video Modal ---
-        function openVideo(startStr, endStr) {
+        function openVideo(startStr, endStr, customVideoId) {
             const startSeconds = parseTimeStr(startStr);
             const endSeconds = parseTimeStr(endStr);
-            const videoId = library[currentBookId].videoId;
+            
+            // Usar video ID personalizado si existe, si no, el del libro global
+            const videoId = customVideoId || library[currentBookId].videoId;
             
             const modal = document.getElementById('video-modal');
             const iframe = document.getElementById('youtube-iframe');
