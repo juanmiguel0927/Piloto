@@ -1,13 +1,33 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" class="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tracker: Hábitos Atómicos</title>
-    <!-- Tailwind CSS para el diseño -->
+    
+    <!-- Tailwind CSS Configuración para Modo Oscuro -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        slate: {
+                            850: '#1e293b', // Un tono más oscuro específico
+                            950: '#020617',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
     <!-- Iconos Lucide -->
     <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Confetti para celebraciones -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
     <style>
         /* Estilos personalizados para animaciones suaves */
         .transition-width {
@@ -20,57 +40,62 @@
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
-        /* Estilo para el checkbox personalizado */
+        
+        /* Checkbox Personalizado */
         .check-btn:hover .icon-circle { opacity: 0; }
         .check-btn:hover .icon-check { opacity: 0.5; }
         .check-btn.completed .icon-circle { display: none; }
         .check-btn.completed .icon-check { display: block; opacity: 1; color: #22c55e; transform: scale(1.1); }
         .check-btn:not(.completed) .icon-check { display: none; }
 
-        /* Estilo para el item "Siguiente" */
+        /* Item "Siguiente" */
         .next-up {
             border-left: 4px solid #f59e0b; /* Amber-500 */
-            background-color: #fffbeb; /* Amber-50 */
+            background-color: #fffbeb; /* Amber-50 (Light) */
         }
+        /* Dark Mode overrides para Next Up */
+        .dark .next-up {
+            background-color: #451a03; /* Amber-950/30 aprox */
+            border-left-color: #d97706;
+        }
+
         .next-up .next-badge { display: inline-flex; }
         .item-row:not(.next-up) .next-badge { display: none; }
 
-        /* Estilos del Modal de Video */
-        #video-modal {
-            transition: opacity 0.3s ease-in-out;
-        }
-        #video-modal.hidden {
-            display: none;
-            opacity: 0;
-            pointer-events: none;
-        }
-        #video-modal:not(.hidden) {
-            display: flex;
-            opacity: 1;
-            pointer-events: auto;
-        }
+        /* Modal Transiciones */
+        #video-modal { transition: opacity 0.3s ease-in-out; }
+        #video-modal.hidden { display: none; opacity: 0; pointer-events: none; }
+        #video-modal:not(.hidden) { display: flex; opacity: 1; pointer-events: auto; }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-800 font-sans pb-12">
+<body class="bg-slate-50 text-slate-800 font-sans pb-12 transition-colors duration-300 dark:bg-slate-950 dark:text-slate-200">
 
     <!-- Header Fijo -->
-    <div class="sticky top-0 z-10 bg-white shadow-sm border-b border-slate-200">
+    <div class="sticky top-0 z-10 bg-white shadow-sm border-b border-slate-200 dark:bg-slate-900 dark:border-slate-800 transition-colors duration-300">
         <div class="max-w-3xl mx-auto px-4 py-4">
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-3 gap-2">
-                <h1 class="text-xl font-bold text-slate-900 flex items-center gap-2">
-                    <i data-lucide="book-open" class="w-6 h-6 text-amber-500"></i>
-                    Tracker: Hábitos Atómicos
-                </h1>
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-3 gap-3">
+                <div class="flex items-center gap-3">
+                    <h1 class="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                        <i data-lucide="book-open" class="w-6 h-6 text-amber-500"></i>
+                        Hábitos Atómicos
+                    </h1>
+                    <!-- Botón Modo Oscuro -->
+                    <button onclick="toggleDarkMode()" class="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 transition-colors" title="Cambiar tema">
+                        <i data-lucide="moon" class="w-5 h-5 hidden dark:block"></i>
+                        <i data-lucide="sun" class="w-5 h-5 block dark:hidden"></i>
+                    </button>
+                </div>
+
                 <div class="flex items-center gap-3 text-sm">
                      <div class="flex flex-col items-end">
-                        <span id="progress-text" class="font-bold text-amber-600">0% Completado</span>
-                        <span id="time-text" class="text-xs text-slate-500 font-mono">0h 0m / 8h 11m</span>
+                        <span id="progress-text" class="font-bold text-amber-600 dark:text-amber-500">0% Completado</span>
+                        <span id="time-text" class="text-xs text-slate-500 dark:text-slate-400 font-mono">0h 0m / 8h 11m</span>
                      </div>
                 </div>
             </div>
             
             <!-- Barra de Progreso -->
-            <div class="w-full bg-slate-200 rounded-full h-2.5 overflow-hidden">
+            <div class="w-full bg-slate-200 dark:bg-slate-800 rounded-full h-2.5 overflow-hidden">
                 <div id="progress-bar" class="bg-amber-500 h-2.5 rounded-full transition-width relative" style="width: 0%">
                     <div class="absolute inset-0 bg-white/20 animate-pulse"></div>
                 </div>
@@ -79,13 +104,24 @@
     </div>
 
     <div class="max-w-3xl mx-auto px-4 mt-6">
+        
+        <!-- Quote Card (Nueva Funcionalidad) -->
+        <div id="quote-card" class="bg-amber-50 dark:bg-slate-900 border-l-4 border-amber-400 p-4 mb-8 rounded-r-xl shadow-sm fade-in flex gap-3 items-start">
+            <i data-lucide="quote" class="w-8 h-8 text-amber-300 flex-shrink-0 mt-1"></i>
+            <div>
+                <p id="quote-text" class="text-slate-700 dark:text-slate-300 italic text-sm font-medium mb-1">
+                    "Cargando frase inspiradora..."
+                </p>
+                <p class="text-slate-400 dark:text-slate-500 text-xs">— James Clear</p>
+            </div>
+        </div>
+
         <!-- Intro Card -->
-        <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100 mb-8 fade-in">
-            <h2 class="text-lg font-semibold mb-2 text-slate-800">Tu progreso de lectura</h2>
-            <p class="text-slate-600 text-sm leading-relaxed">
-                Esta herramienta guarda tu progreso automáticamente.
-                Haz clic en <span class="inline-flex items-center bg-amber-100 text-amber-700 rounded px-1.5 py-0.5 text-xs font-bold mx-1"><i data-lucide="play" class="w-3 h-3 mr-1"></i> Ver</span> para reproducir el capítulo. 
-                El video <strong>se detendrá automáticamente</strong> al finalizar la sección.
+        <div class="bg-white dark:bg-slate-900 p-6 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 mb-8 fade-in transition-colors duration-300">
+            <h2 class="text-lg font-semibold mb-2 text-slate-800 dark:text-white">Tu sistema de aprendizaje</h2>
+            <p class="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
+                Haz clic en <span class="inline-flex items-center bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300 rounded px-1.5 py-0.5 text-xs font-bold mx-1"><i data-lucide="play" class="w-3 h-3 mr-1"></i> Ver</span> para reproducir.
+                Al completar una sección, marca el círculo para recibir tu dosis de dopamina 🎉.
             </p>
         </div>
 
@@ -95,17 +131,17 @@
         </div>
 
         <!-- Botón Reset y Footer -->
-        <div class="mt-8 mb-12 text-center fade-in border-t border-slate-200 pt-8">
+        <div class="mt-8 mb-12 text-center fade-in border-t border-slate-200 dark:border-slate-800 pt-8">
             <button onclick="resetProgress()" class="text-xs text-slate-400 hover:text-red-500 underline transition-colors mb-4 flex items-center justify-center gap-1 mx-auto">
                 <i data-lucide="rotate-ccw" class="w-3 h-3"></i> Reiniciar todo el progreso
             </button>
-            <p class="text-slate-400 text-xs">Basado en el audiolibro de James Clear.</p>
+            <p class="text-slate-400 dark:text-slate-600 text-xs">Una mejora del 1% cada día.</p>
         </div>
     </div>
 
     <!-- Modal de Video -->
     <div id="video-modal" class="hidden fixed inset-0 z-50 items-center justify-center bg-black/90 p-4 backdrop-blur-sm">
-        <div class="bg-black w-full max-w-4xl rounded-xl overflow-hidden shadow-2xl relative flex flex-col">
+        <div class="bg-black w-full max-w-4xl rounded-xl overflow-hidden shadow-2xl relative flex flex-col border border-slate-800">
             <!-- Header del Modal -->
             <div class="flex items-center justify-between p-3 bg-slate-900 text-white border-b border-slate-800">
                 <span class="text-sm font-medium flex items-center gap-2">
@@ -135,7 +171,7 @@
 
     <!-- Lógica de la Aplicación -->
     <script>
-        // Datos del libro
+        // --- Datos del libro ---
         const sections = [
             {
                 title: "Introducción",
@@ -201,9 +237,20 @@
             }
         ];
 
-        // --- Funciones de Tiempo ---
+        // --- Citas del libro ---
+        const quotes = [
+            "No te elevas al nivel de tus metas. Caes al nivel de tus sistemas.",
+            "Los hábitos son el interés compuesto de la superación personal.",
+            "Cada acción que tomas es un voto por el tipo de persona en la que deseas convertirte.",
+            "Debes estar mucho más interesado en tu trayectoria actual que en tus resultados actuales.",
+            "La forma más efectiva de cambiar tus hábitos es no enfocarte en lo que quieres lograr, sino en quién quieres llegar a ser.",
+            "El ambiente es la mano invisible que moldea el comportamiento humano.",
+            "Hazlo obvio. Hazlo atractivo. Hazlo sencillo. Hazlo satisfactorio.",
+            "El éxito es el producto de los hábitos diarios, no de transformaciones de una vez en la vida.",
+            "Un 1% mejor cada día, termina siendo 37 veces mejor al final del año."
+        ];
 
-        // Convertir "HH:MM:SS" o "MM:SS" a segundos totales
+        // --- Funciones de Tiempo ---
         function parseTimeStr(timeStr) {
             const parts = timeStr.split(':').map(Number);
             if (parts.length === 3) return parts[0] * 3600 + parts[1] * 60 + parts[2];
@@ -211,7 +258,6 @@
             return 0;
         }
 
-        // Formatear segundos a "Xh Ym" o "Ym"
         function formatDuration(totalSeconds) {
             const h = Math.floor(totalSeconds / 3600);
             const m = Math.floor((totalSeconds % 3600) / 60);
@@ -219,7 +265,6 @@
             return `${m} min`;
         }
 
-        // Calcular duración de un item
         function getItemDuration(item) {
             const startSec = parseTimeStr(item.start);
             const endSec = parseTimeStr(item.end);
@@ -227,20 +272,29 @@
         }
 
         // --- Estado y Lógica Principal ---
-
         let completed = JSON.parse(localStorage.getItem('atomicHabitsProgressHTML')) || [];
         
         // Calcular estadisticas iniciales
         let totalBookSeconds = 0;
         sections.forEach(s => s.items.forEach(i => totalBookSeconds += getItemDuration(i)));
 
-        function toggleComplete(id) {
+        function toggleComplete(id, event) {
+            // Detener propagación para evitar que click en fila dispare lógica incorrecta si la hubiera
+            if(event) event.stopPropagation();
+
+            const isCompleting = !completed.includes(id);
+
             if (completed.includes(id)) {
                 completed = completed.filter(item => item !== id);
             } else {
                 completed.push(id);
             }
             saveAndRender();
+
+            // Lanzar confeti solo si estamos completando
+            if (isCompleting) {
+                triggerConfetti();
+            }
         }
 
         function resetProgress() {
@@ -250,46 +304,87 @@
             }
         }
 
-        // --- Nueva Lógica de Video Modal ---
-        
+        // --- Citas ---
+        function loadRandomQuote() {
+            const index = Math.floor(Math.random() * quotes.length);
+            document.getElementById('quote-text').innerText = `"${quotes[index]}"`;
+        }
+
+        // --- Modo Oscuro ---
+        function initDarkMode() {
+            const isDark = localStorage.getItem('theme') === 'dark' || 
+                          (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches);
+            
+            updateTheme(isDark);
+        }
+
+        function toggleDarkMode() {
+            const html = document.documentElement;
+            const isDark = html.classList.contains('dark');
+            updateTheme(!isDark);
+        }
+
+        function updateTheme(isDark) {
+            const html = document.documentElement;
+            if (isDark) {
+                html.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                html.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            }
+        }
+
+        // --- Confetti FX ---
+        function triggerConfetti() {
+            var count = 200;
+            var defaults = {
+                origin: { y: 0.7 }
+            };
+
+            function fire(particleRatio, opts) {
+                confetti(Object.assign({}, defaults, opts, {
+                    particleCount: Math.floor(count * particleRatio)
+                }));
+            }
+
+            fire(0.25, { spread: 26, startVelocity: 55 });
+            fire(0.2, { spread: 60 });
+            fire(0.35, { spread: 100, decay: 0.91, scalar: 0.8 });
+            fire(0.1, { spread: 120, startVelocity: 25, decay: 0.92, scalar: 1.2 });
+            fire(0.1, { spread: 120, startVelocity: 45 });
+        }
+
+        // --- Video Modal ---
         function openVideo(startSeconds, endSeconds) {
             const modal = document.getElementById('video-modal');
             const iframe = document.getElementById('youtube-iframe');
             
-            // Construir URL con start y end (para que pare solo)
-            // Agregamos autoplay=1 para que empiece solo
             const videoId = "CgGiyfv7Xpc";
             const embedUrl = `https://www.youtube.com/embed/${videoId}?start=${startSeconds}&end=${endSeconds}&autoplay=1&rel=0`;
             
             iframe.src = embedUrl;
             modal.classList.remove('hidden');
-            
-            // Prevenir scroll en el fondo
             document.body.style.overflow = 'hidden';
         }
 
         function closeVideo() {
             const modal = document.getElementById('video-modal');
             const iframe = document.getElementById('youtube-iframe');
-            
-            // Limpiar src para detener el video
             iframe.src = "";
             modal.classList.add('hidden');
-            
-            // Restaurar scroll
             document.body.style.overflow = 'auto';
         }
 
-        // Cerrar modal con tecla ESC
         document.addEventListener('keydown', (e) => {
             if (e.key === "Escape") closeVideo();
         });
 
-        // Cerrar modal haciendo click fuera del video
         document.getElementById('video-modal').addEventListener('click', (e) => {
             if (e.target.id === 'video-modal') closeVideo();
         });
 
+        // --- Renderizado ---
         function saveAndRender() {
             localStorage.setItem('atomicHabitsProgressHTML', JSON.stringify(completed));
             updateProgressUI();
@@ -297,11 +392,9 @@
         }
 
         function updateProgressUI() {
-            // Calcular total de items
             const totalItems = sections.reduce((acc, section) => acc + section.items.length, 0);
             const percentage = Math.round((completed.length / totalItems) * 100);
             
-            // Calcular tiempo escuchado
             let listenedSeconds = 0;
             sections.forEach(section => {
                 section.items.forEach(item => {
@@ -326,24 +419,19 @@
                 const sectionEl = document.createElement('div');
                 sectionEl.className = 'fade-in';
                 
-                // Título de la sección
                 const header = document.createElement('h3');
-                header.className = 'text-sm font-bold text-slate-500 uppercase tracking-wider mb-3 ml-1';
+                header.className = 'text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3 ml-1';
                 header.innerText = section.title;
                 sectionEl.appendChild(header);
 
-                // Contenedor de items
                 const listContainer = document.createElement('div');
-                listContainer.className = 'bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden';
+                listContainer.className = 'bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden transition-colors duration-300';
 
                 section.items.forEach(item => {
                     const isCompleted = completed.includes(item.id);
                     const durationStr = formatDuration(getItemDuration(item));
-                    
-                    // Convertir el tiempo final string a segundos para pasarlo a la función openVideo
                     const endSeconds = parseTimeStr(item.end);
 
-                    // Determinar si es el "Siguiente" item (el primero no completado)
                     let isNextUp = false;
                     if (!isCompleted && !firstUncompletedFound) {
                         isNextUp = true;
@@ -351,25 +439,26 @@
                     }
 
                     const itemEl = document.createElement('div');
-                    // Clases dinámicas
-                    itemEl.className = `item-row group flex items-center justify-between p-4 border-b border-slate-100 last:border-0 hover:bg-slate-50 transition-colors ${isCompleted ? 'bg-slate-50' : ''} ${isNextUp ? 'next-up' : ''}`;
+                    itemEl.className = `item-row group flex items-center justify-between p-4 border-b border-slate-100 dark:border-slate-800 last:border-0 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors 
+                        ${isCompleted ? 'bg-slate-50 dark:bg-slate-950/50' : ''} 
+                        ${isNextUp ? 'next-up' : ''}`;
                     
                     itemEl.innerHTML = `
-                        <div class="flex items-center gap-4 flex-1 cursor-pointer" onclick="toggleComplete(${item.id})">
-                            <button class="check-btn flex-shrink-0 transition-all duration-200 text-slate-300 hover:text-slate-400 ${isCompleted ? 'completed' : ''}">
+                        <div class="flex items-center gap-4 flex-1 cursor-pointer" onclick="toggleComplete(${item.id}, event)">
+                            <button class="check-btn flex-shrink-0 transition-all duration-200 text-slate-300 dark:text-slate-600 hover:text-slate-400 dark:hover:text-slate-500 ${isCompleted ? 'completed' : ''}">
                                 <i data-lucide="circle" class="w-6 h-6 icon-circle"></i>
                                 <i data-lucide="check-circle" class="w-6 h-6 icon-check"></i>
                             </button>
                             
                             <div class="flex-1">
                                 <div class="flex items-center gap-2 mb-1">
-                                    <span class="next-badge text-[10px] font-bold uppercase tracking-wide text-amber-600 bg-amber-100 px-1.5 py-0.5 rounded">Siguiente</span>
-                                    <p class="font-medium text-base transition-colors leading-tight ${isCompleted ? 'text-slate-400 line-through decoration-slate-300' : 'text-slate-800'}">
+                                    <span class="next-badge text-[10px] font-bold uppercase tracking-wide text-amber-600 dark:text-amber-300 bg-amber-100 dark:bg-amber-900/40 px-1.5 py-0.5 rounded">Siguiente</span>
+                                    <p class="font-medium text-base transition-colors leading-tight ${isCompleted ? 'text-slate-400 dark:text-slate-600 line-through decoration-slate-300 dark:decoration-slate-700' : 'text-slate-800 dark:text-slate-200'}">
                                         ${item.title}
                                     </p>
                                 </div>
-                                <div class="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1 text-xs font-mono text-slate-500">
-                                    <span class="flex items-center gap-1 bg-slate-100 px-2 py-0.5 rounded">
+                                <div class="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1 text-xs font-mono text-slate-500 dark:text-slate-500">
+                                    <span class="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded">
                                         <i data-lucide="clock" class="w-3 h-3"></i> ${durationStr}
                                     </span>
                                     <span>${item.start} - ${item.end}</span>
@@ -377,8 +466,8 @@
                             </div>
                         </div>
 
-                        <button onclick="openVideo(${item.seconds}, ${endSeconds})" 
-                                class="ml-4 p-2 bg-amber-100 text-amber-700 rounded-full hover:bg-amber-500 hover:text-white transition-all shadow-sm group-hover:shadow-md flex items-center gap-2"
+                        <button onclick="openVideo(${item.seconds}, ${endSeconds}); event.stopPropagation();" 
+                                class="ml-4 p-2 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 rounded-full hover:bg-amber-500 dark:hover:bg-amber-600 hover:text-white transition-all shadow-sm group-hover:shadow-md flex items-center gap-2"
                                 title="Ver en YouTube">
                             <i data-lucide="play" class="w-4 h-4 fill-current"></i>
                             <span class="text-xs font-bold hidden sm:inline">Ver</span>
@@ -391,12 +480,13 @@
                 container.appendChild(sectionEl);
             });
             
-            // Re-inicializar iconos de Lucide
             lucide.createIcons();
         }
 
         // Inicialización
         document.addEventListener('DOMContentLoaded', () => {
+            initDarkMode();
+            loadRandomQuote();
             saveAndRender();
         });
 
