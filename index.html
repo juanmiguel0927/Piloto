@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tracker: Hábitos Atómicos</title>
+    <title>Tracker de Audiolibros</title>
     
-    <!-- Tailwind CSS Configuración para Modo Oscuro -->
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -14,7 +14,7 @@
                 extend: {
                     colors: {
                         slate: {
-                            850: '#1e293b', // Un tono más oscuro específico
+                            850: '#1e293b',
                             950: '#020617',
                         }
                     }
@@ -25,62 +25,61 @@
     
     <!-- Iconos Lucide -->
     <script src="https://unpkg.com/lucide@latest"></script>
-    <!-- Confetti para celebraciones -->
+    <!-- Confetti -->
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
     <style>
-        /* Estilos personalizados para animaciones suaves */
-        .transition-width {
-            transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .fade-in {
-            animation: fadeIn 0.5s ease-out;
-        }
+        .transition-width { transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
+        .fade-in { animation: fadeIn 0.5s ease-out; }
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
         
-        /* Checkbox Personalizado */
+        /* Checkbox Styles */
         .check-btn:hover .icon-circle { opacity: 0; }
         .check-btn:hover .icon-check { opacity: 0.5; }
         .check-btn.completed .icon-circle { display: none; }
         .check-btn.completed .icon-check { display: block; opacity: 1; color: #22c55e; transform: scale(1.1); }
         .check-btn:not(.completed) .icon-check { display: none; }
 
-        /* Item "Siguiente" */
-        .next-up {
-            border-left: 4px solid #f59e0b; /* Amber-500 */
-            background-color: #fffbeb; /* Amber-50 (Light) */
-        }
-        /* Dark Mode overrides para Next Up */
-        .dark .next-up {
-            background-color: #451a03; /* Amber-950/30 aprox */
-            border-left-color: #d97706;
-        }
-
+        /* Next Up Styles */
+        .next-up { border-left: 4px solid #f59e0b; background-color: #fffbeb; }
+        .dark .next-up { background-color: #451a03; border-left-color: #d97706; }
         .next-up .next-badge { display: inline-flex; }
         .item-row:not(.next-up) .next-badge { display: none; }
 
-        /* Modal Transiciones */
+        /* Modal */
         #video-modal { transition: opacity 0.3s ease-in-out; }
         #video-modal.hidden { display: none; opacity: 0; pointer-events: none; }
         #video-modal:not(.hidden) { display: flex; opacity: 1; pointer-events: auto; }
+
+        /* Tabs */
+        .tab-btn.active { 
+            border-bottom: 2px solid #f59e0b; 
+            color: #f59e0b; 
+            font-weight: 600;
+        }
+        .tab-btn:not(.active) {
+            color: #64748b;
+            border-bottom: 2px solid transparent;
+        }
+        .dark .tab-btn:not(.active) { color: #94a3b8; }
+        .dark .tab-btn:not(.active):hover { color: #cbd5e1; }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800 font-sans pb-12 transition-colors duration-300 dark:bg-slate-950 dark:text-slate-200">
 
     <!-- Header Fijo -->
     <div class="sticky top-0 z-10 bg-white shadow-sm border-b border-slate-200 dark:bg-slate-900 dark:border-slate-800 transition-colors duration-300">
-        <div class="max-w-3xl mx-auto px-4 py-4">
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-3 gap-3">
+        <div class="max-w-3xl mx-auto px-4 pt-4 pb-0">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-3">
                 <div class="flex items-center gap-3">
                     <h1 class="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                        <i data-lucide="book-open" class="w-6 h-6 text-amber-500"></i>
-                        Hábitos Atómicos
+                        <i data-lucide="library" class="w-6 h-6 text-amber-500"></i>
+                        Mis Audiolibros
                     </h1>
-                    <!-- Botón Modo Oscuro -->
-                    <button onclick="toggleDarkMode()" class="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 transition-colors" title="Cambiar tema">
+                    <button onclick="toggleDarkMode()" class="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 transition-colors">
                         <i data-lucide="moon" class="w-5 h-5 hidden dark:block"></i>
                         <i data-lucide="sun" class="w-5 h-5 block dark:hidden"></i>
                     </button>
@@ -89,39 +88,49 @@
                 <div class="flex items-center gap-3 text-sm">
                      <div class="flex flex-col items-end">
                         <span id="progress-text" class="font-bold text-amber-600 dark:text-amber-500">0% Completado</span>
-                        <span id="time-text" class="text-xs text-slate-500 dark:text-slate-400 font-mono">0h 0m / 8h 11m</span>
+                        <span id="time-text" class="text-xs text-slate-500 dark:text-slate-400 font-mono">0h 0m / 0h 0m</span>
                      </div>
                 </div>
             </div>
             
             <!-- Barra de Progreso -->
-            <div class="w-full bg-slate-200 dark:bg-slate-800 rounded-full h-2.5 overflow-hidden">
+            <div class="w-full bg-slate-200 dark:bg-slate-800 rounded-full h-2.5 overflow-hidden mb-4">
                 <div id="progress-bar" class="bg-amber-500 h-2.5 rounded-full transition-width relative" style="width: 0%">
                     <div class="absolute inset-0 bg-white/20 animate-pulse"></div>
                 </div>
+            </div>
+
+            <!-- Navegación de Pestañas -->
+            <div class="flex space-x-6 overflow-x-auto scrollbar-hide">
+                <button onclick="switchBook('habitosAtomicos')" id="tab-habitosAtomicos" class="tab-btn pb-3 px-1 text-sm whitespace-nowrap transition-colors">
+                    Hábitos Atómicos
+                </button>
+                <button onclick="switchBook('cosasBuenas')" id="tab-cosasBuenas" class="tab-btn pb-3 px-1 text-sm whitespace-nowrap transition-colors">
+                    Cómo hacer que te pasen cosas buenas
+                </button>
             </div>
         </div>
     </div>
 
     <div class="max-w-3xl mx-auto px-4 mt-6">
         
-        <!-- Quote Card (Nueva Funcionalidad) -->
+        <!-- Quote Card -->
         <div id="quote-card" class="bg-amber-50 dark:bg-slate-900 border-l-4 border-amber-400 p-4 mb-8 rounded-r-xl shadow-sm fade-in flex gap-3 items-start">
             <i data-lucide="quote" class="w-8 h-8 text-amber-300 flex-shrink-0 mt-1"></i>
             <div>
                 <p id="quote-text" class="text-slate-700 dark:text-slate-300 italic text-sm font-medium mb-1">
-                    "Cargando frase inspiradora..."
+                    Cargando...
                 </p>
-                <p class="text-slate-400 dark:text-slate-500 text-xs">— James Clear</p>
+                <p id="quote-author" class="text-slate-400 dark:text-slate-500 text-xs"></p>
             </div>
         </div>
 
-        <!-- Intro Card -->
+        <!-- Book Title Card -->
         <div class="bg-white dark:bg-slate-900 p-6 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 mb-8 fade-in transition-colors duration-300">
-            <h2 class="text-lg font-semibold mb-2 text-slate-800 dark:text-white">Tu sistema de aprendizaje</h2>
+            <h2 id="book-title-display" class="text-lg font-semibold mb-1 text-slate-800 dark:text-white"></h2>
+            <p id="book-author-display" class="text-sm text-amber-600 dark:text-amber-500 mb-2"></p>
             <p class="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
-                Haz clic en <span class="inline-flex items-center bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300 rounded px-1.5 py-0.5 text-xs font-bold mx-1"><i data-lucide="play" class="w-3 h-3 mr-1"></i> Ver</span> para reproducir.
-                Al completar una sección, marca el círculo para recibir tu dosis de dopamina 🎉.
+                Haz clic en <span class="inline-flex items-center bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300 rounded px-1.5 py-0.5 text-xs font-bold mx-1"><i data-lucide="play" class="w-3 h-3 mr-1"></i> Ver</span> para reproducir el capítulo.
             </p>
         </div>
 
@@ -130,125 +139,119 @@
             <!-- El contenido se generará aquí con JavaScript -->
         </div>
 
-        <!-- Botón Reset y Footer -->
+        <!-- Botón Reset -->
         <div class="mt-8 mb-12 text-center fade-in border-t border-slate-200 dark:border-slate-800 pt-8">
             <button onclick="resetProgress()" class="text-xs text-slate-400 hover:text-red-500 underline transition-colors mb-4 flex items-center justify-center gap-1 mx-auto">
-                <i data-lucide="rotate-ccw" class="w-3 h-3"></i> Reiniciar todo el progreso
+                <i data-lucide="rotate-ccw" class="w-3 h-3"></i> Reiniciar progreso de este libro
             </button>
-            <p class="text-slate-400 dark:text-slate-600 text-xs">Una mejora del 1% cada día.</p>
         </div>
     </div>
 
     <!-- Modal de Video -->
     <div id="video-modal" class="hidden fixed inset-0 z-50 items-center justify-center bg-black/90 p-4 backdrop-blur-sm">
         <div class="bg-black w-full max-w-4xl rounded-xl overflow-hidden shadow-2xl relative flex flex-col border border-slate-800">
-            <!-- Header del Modal -->
             <div class="flex items-center justify-between p-3 bg-slate-900 text-white border-b border-slate-800">
                 <span class="text-sm font-medium flex items-center gap-2">
-                    <i data-lucide="youtube" class="w-4 h-4 text-red-500"></i> Reproduciendo Capítulo
+                    <i data-lucide="youtube" class="w-4 h-4 text-red-500"></i> Reproduciendo
                 </span>
                 <button onclick="closeVideo()" class="text-slate-400 hover:text-white transition-colors p-1 hover:bg-white/10 rounded-full">
                     <i data-lucide="x" class="w-5 h-5"></i>
                 </button>
             </div>
-            
-            <!-- Contenedor del Iframe (Aspect Ratio 16:9) -->
             <div class="relative w-full aspect-video bg-black">
-                <iframe id="youtube-iframe" 
-                        class="absolute top-0 left-0 w-full h-full"
-                        src="" 
-                        title="YouTube video player" 
-                        frameborder="0" 
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
-                        allowfullscreen>
-                </iframe>
-            </div>
-            <div class="p-2 bg-slate-900 text-center text-xs text-slate-500">
-                El video se pausará automáticamente al terminar la sección.
+                <iframe id="youtube-iframe" class="absolute top-0 left-0 w-full h-full" src="" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
             </div>
         </div>
     </div>
 
     <!-- Lógica de la Aplicación -->
     <script>
-        // --- Datos del libro ---
-        const sections = [
-            {
-                title: "Introducción",
-                items: [
-                    { id: 0, title: "Introducción: Mi historia", start: "00:00:00", end: "00:26:50", seconds: 0 }
+        // --- Datos de los Libros ---
+        const library = {
+            habitosAtomicos: {
+                title: "Hábitos Atómicos",
+                author: "James Clear",
+                videoId: "CgGiyfv7Xpc",
+                quotes: [
+                    "No te elevas al nivel de tus metas. Caes al nivel de tus sistemas.",
+                    "Los hábitos son el interés compuesto de la superación personal.",
+                    "Cada acción que tomas es un voto por el tipo de persona en la que deseas convertirte.",
+                    "Hazlo obvio. Hazlo atractivo. Hazlo sencillo. Hazlo satisfactorio.",
+                    "Un 1% mejor cada día, termina siendo 37 veces mejor al final del año."
+                ],
+                sections: [
+                    { title: "Introducción", items: [{ id: 0, title: "Introducción: Mi historia", start: "00:00:00", end: "00:26:50" }] },
+                    { title: "Principios Fundamentales", items: [
+                        { id: 1, title: "1. El sorprendente poder de los hábitos atómicos", start: "00:27:05", end: "01:05:30" },
+                        { id: 2, title: "2. La manera en que tus hábitos moldean tu identidad", start: "01:05:30", end: "01:36:11" },
+                        { id: 3, title: "3. Cómo construir mejores hábitos en 4 pasos", start: "01:36:11", end: "02:07:09" }
+                    ]},
+                    { title: "Primera Ley: Hacerlo Obvio", items: [
+                        { id: 4, title: "4. El hombre que no se veía bien", start: "02:07:09", end: "02:26:54" },
+                        { id: 5, title: "5. La mejor manera de comenzar un nuevo hábito", start: "02:26:54", end: "02:50:02" },
+                        { id: 6, title: "6. La motivación está sobrevalorada", start: "02:50:02", end: "03:12:44" },
+                        { id: 7, title: "7. El secreto del autocontrol", start: "03:12:44", end: "03:23:53" }
+                    ]},
+                    { title: "Segunda Ley: Hacerlo Atractivo", items: [
+                        { id: 8, title: "8. Cómo lograr que un hábito sea irresistible", start: "03:24:07", end: "03:49:54" },
+                        { id: 9, title: "9. El papel de la familia y los amigos", start: "03:49:54", end: "04:14:32" },
+                        { id: 10, title: "10. Cómo localizar y arreglar malos hábitos", start: "04:14:32", end: "04:36:52" }
+                    ]},
+                    { title: "Tercera Ley: Hacerlo Sencillo", items: [
+                        { id: 11, title: "11. Avanza despacio, pero no des marcha atrás", start: "04:37:06", end: "04:49:33" },
+                        { id: 12, title: "12. La ley del menor esfuerzo", start: "04:49:33", end: "05:13:20" },
+                        { id: 13, title: "13. Cómo dejar de postergar (Regla de 2 min)", start: "05:13:20", end: "05:30:02" },
+                        { id: 14, title: "14. Cómo hacer inevitables los buenos hábitos", start: "05:30:02", end: "05:47:05" }
+                    ]},
+                    { title: "Cuarta Ley: Hacerlo Satisfactorio", items: [
+                        { id: 15, title: "15. La regla cardinal del cambio de conducta", start: "05:47:18", end: "06:14:37" },
+                        { id: 16, title: "16. Cómo mantener los buenos hábitos todos los días", start: "06:14:37", end: "06:39:28" },
+                        { id: 17, title: "17. Cómo un socio corresponsable cambia todo", start: "06:39:28", end: "06:54:29" }
+                    ]},
+                    { title: "Tácticas Avanzadas", items: [
+                        { id: 18, title: "18. La verdad acerca del talento", start: "06:54:43", end: "07:23:04" },
+                        { id: 19, title: "19. La regla de Ricitos de Oro", start: "07:23:04", end: "07:41:26" },
+                        { id: 20, title: "20. El inconveniente de crear buenos hábitos", start: "07:41:26", end: "08:06:22" }
+                    ]},
+                    { title: "Conclusión", items: [
+                        { id: 21, title: "Conclusión: El secreto para resultados que duren", start: "08:06:22", end: "08:11:42" }
+                    ]}
                 ]
             },
-            {
-                title: "Principios Fundamentales",
-                items: [
-                    { id: 1, title: "1. El sorprendente poder de los hábitos atómicos", start: "00:27:05", end: "01:05:30", seconds: 1625 },
-                    { id: 2, title: "2. La manera en que tus hábitos moldean tu identidad", start: "01:05:30", end: "01:36:11", seconds: 3930 },
-                    { id: 3, title: "3. Cómo construir mejores hábitos en 4 pasos", start: "01:36:11", end: "02:07:09", seconds: 5771 }
-                ]
-            },
-            {
-                title: "Primera Ley: Hacerlo Obvio",
-                items: [
-                    { id: 4, title: "4. El hombre que no se veía bien", start: "02:07:09", end: "02:26:54", seconds: 7629 },
-                    { id: 5, title: "5. La mejor manera de comenzar un nuevo hábito", start: "02:26:54", end: "02:50:02", seconds: 8814 },
-                    { id: 6, title: "6. La motivación está sobrevalorada", start: "02:50:02", end: "03:12:44", seconds: 10202 },
-                    { id: 7, title: "7. El secreto del autocontrol", start: "03:12:44", end: "03:23:53", seconds: 11564 }
-                ]
-            },
-            {
-                title: "Segunda Ley: Hacerlo Atractivo",
-                items: [
-                    { id: 8, title: "8. Cómo lograr que un hábito sea irresistible", start: "03:24:07", end: "03:49:54", seconds: 12247 },
-                    { id: 9, title: "9. El papel de la familia y los amigos", start: "03:49:54", end: "04:14:32", seconds: 13794 },
-                    { id: 10, title: "10. Cómo localizar y arreglar malos hábitos", start: "04:14:32", end: "04:36:52", seconds: 15272 }
-                ]
-            },
-            {
-                title: "Tercera Ley: Hacerlo Sencillo",
-                items: [
-                    { id: 11, title: "11. Avanza despacio, pero no des marcha atrás", start: "04:37:06", end: "04:49:33", seconds: 16626 },
-                    { id: 12, title: "12. La ley del menor esfuerzo", start: "04:49:33", end: "05:13:20", seconds: 17373 },
-                    { id: 13, title: "13. Cómo dejar de postergar (Regla de 2 min)", start: "05:13:20", end: "05:30:02", seconds: 18800 },
-                    { id: 14, title: "14. Cómo hacer inevitables los buenos hábitos", start: "05:30:02", end: "05:47:05", seconds: 19802 }
-                ]
-            },
-            {
-                title: "Cuarta Ley: Hacerlo Satisfactorio",
-                items: [
-                    { id: 15, title: "15. La regla cardinal del cambio de conducta", start: "05:47:18", end: "06:14:37", seconds: 20838 },
-                    { id: 16, title: "16. Cómo mantener los buenos hábitos todos los días", start: "06:14:37", end: "06:39:28", seconds: 22477 },
-                    { id: 17, title: "17. Cómo un socio corresponsable cambia todo", start: "06:39:28", end: "06:54:29", seconds: 23968 }
-                ]
-            },
-            {
-                title: "Tácticas Avanzadas",
-                items: [
-                    { id: 18, title: "18. La verdad acerca del talento", start: "06:54:43", end: "07:23:04", seconds: 24883 },
-                    { id: 19, title: "19. La regla de Ricitos de Oro", start: "07:23:04", end: "07:41:26", seconds: 26584 },
-                    { id: 20, title: "20. El inconveniente de crear buenos hábitos", start: "07:41:26", end: "08:06:22", seconds: 27686 }
-                ]
-            },
-            {
-                title: "Conclusión",
-                items: [
-                    { id: 21, title: "Conclusión: El secreto para resultados que duren", start: "08:06:22", end: "08:11:42", seconds: 29182 }
+            cosasBuenas: {
+                title: "Cómo hacer que te pasen cosas buenas",
+                author: "Marian Rojas Estapé",
+                videoId: "UiedpTbutXg",
+                quotes: [
+                    "La felicidad no se define, se experimenta.",
+                    "La felicidad consiste en tener una vida lograda donde intentamos sacar el mejor partido a nuestros valores.",
+                    "La actitud previa a cualquier situación determina cómo respondo a ella.",
+                    "Comprender es aliviar.",
+                    "El sufrimiento es por tanto escuela de fortaleza.",
+                    "No hay guías rápidas ni atajos que aseguren la felicidad."
+                ],
+                sections: [
+                    { title: "Introducción", items: [
+                        { id: 100, title: "Introducción", start: "00:00:00", end: "00:11:59" }
+                    ]},
+                    { title: "Capítulos", items: [
+                        { id: 101, title: "1. El cerebro humano y nuestros sistemas operativos", start: "00:11:59", end: "00:50:19" },
+                        { id: 102, title: "2. El antídoto al sufrimiento: el amor", start: "00:50:19", end: "01:44:16" },
+                        { id: 103, title: "3. El cortisol", start: "01:44:16", end: "02:24:57" },
+                        { id: 104, title: "4. Ni lo que pasó ni lo que vendrá", start: "02:24:57", end: "03:35:49" },
+                        { id: 105, title: "5. Vivir el momento presente", start: "03:35:49", end: "04:40:38" },
+                        { id: 106, title: "6. Las emociones y su repercusión en la salud", start: "04:40:38", end: "05:37:21" },
+                        { id: 107, title: "7. ¿Qué cosas o actitudes elevan el cortisol?", start: "05:37:21", end: "06:36:28" },
+                        { id: 108, title: "8. ¿Cómo bajar el cortisol?", start: "06:36:28", end: "07:11:47" },
+                        { id: 109, title: "9. Tu mejor versión", start: "07:11:47", end: "07:34:53" }
+                    ]}
                 ]
             }
-        ];
+        };
 
-        // --- Citas del libro ---
-        const quotes = [
-            "No te elevas al nivel de tus metas. Caes al nivel de tus sistemas.",
-            "Los hábitos son el interés compuesto de la superación personal.",
-            "Cada acción que tomas es un voto por el tipo de persona en la que deseas convertirte.",
-            "Debes estar mucho más interesado en tu trayectoria actual que en tus resultados actuales.",
-            "La forma más efectiva de cambiar tus hábitos es no enfocarte en lo que quieres lograr, sino en quién quieres llegar a ser.",
-            "El ambiente es la mano invisible que moldea el comportamiento humano.",
-            "Hazlo obvio. Hazlo atractivo. Hazlo sencillo. Hazlo satisfactorio.",
-            "El éxito es el producto de los hábitos diarios, no de transformaciones de una vez en la vida.",
-            "Un 1% mejor cada día, termina siendo 37 veces mejor al final del año."
-        ];
+        // --- Estado Global ---
+        let currentBookId = localStorage.getItem('activeBookId') || 'habitosAtomicos';
+        let completed = []; // Se cargará dinámicamente según el libro
 
         // --- Funciones de Tiempo ---
         function parseTimeStr(timeStr) {
@@ -266,140 +269,84 @@
         }
 
         function getItemDuration(item) {
-            const startSec = parseTimeStr(item.start);
-            const endSec = parseTimeStr(item.end);
-            return endSec - startSec;
+            return parseTimeStr(item.end) - parseTimeStr(item.start);
         }
 
-        // --- Estado y Lógica Principal ---
-        let completed = JSON.parse(localStorage.getItem('atomicHabitsProgressHTML')) || [];
-        
-        // Calcular estadisticas iniciales
-        let totalBookSeconds = 0;
-        sections.forEach(s => s.items.forEach(i => totalBookSeconds += getItemDuration(i)));
+        // --- Lógica Principal ---
+        function switchBook(bookId) {
+            currentBookId = bookId;
+            localStorage.setItem('activeBookId', bookId);
+            
+            // Cargar progreso del libro específico
+            const savedProgress = localStorage.getItem(`progress_${bookId}`);
+            completed = savedProgress ? JSON.parse(savedProgress) : [];
+            
+            // Actualizar UI de Tabs
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(`tab-${bookId}`).classList.add('active');
+
+            // Actualizar Info del Libro
+            const book = library[bookId];
+            document.getElementById('book-title-display').innerText = book.title;
+            document.getElementById('book-author-display').innerText = book.author;
+
+            loadRandomQuote();
+            saveAndRender();
+        }
 
         function toggleComplete(id, event) {
-            // Detener propagación para evitar que click en fila dispare lógica incorrecta si la hubiera
             if(event) event.stopPropagation();
-
+            
             const isCompleting = !completed.includes(id);
-
             if (completed.includes(id)) {
                 completed = completed.filter(item => item !== id);
             } else {
                 completed.push(id);
             }
+            
+            // Guardar progreso específico del libro
+            localStorage.setItem(`progress_${currentBookId}`, JSON.stringify(completed));
+            
             saveAndRender();
-
-            // Lanzar confeti solo si estamos completando
-            if (isCompleting) {
-                triggerConfetti();
-            }
+            if (isCompleting) triggerConfetti();
         }
 
         function resetProgress() {
-            if(confirm("¿Estás seguro de que quieres borrar todo tu progreso?")) {
+            if(confirm("¿Estás seguro de reiniciar el progreso de ESTE libro?")) {
                 completed = [];
+                localStorage.setItem(`progress_${currentBookId}`, JSON.stringify(completed));
                 saveAndRender();
             }
         }
 
         // --- Citas ---
         function loadRandomQuote() {
+            const quotes = library[currentBookId].quotes;
             const index = Math.floor(Math.random() * quotes.length);
             document.getElementById('quote-text').innerText = `"${quotes[index]}"`;
+            document.getElementById('quote-author').innerText = `— ${library[currentBookId].author}`;
         }
-
-        // --- Modo Oscuro ---
-        function initDarkMode() {
-            const isDark = localStorage.getItem('theme') === 'dark' || 
-                          (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches);
-            
-            updateTheme(isDark);
-        }
-
-        function toggleDarkMode() {
-            const html = document.documentElement;
-            const isDark = html.classList.contains('dark');
-            updateTheme(!isDark);
-        }
-
-        function updateTheme(isDark) {
-            const html = document.documentElement;
-            if (isDark) {
-                html.classList.add('dark');
-                localStorage.setItem('theme', 'dark');
-            } else {
-                html.classList.remove('dark');
-                localStorage.setItem('theme', 'light');
-            }
-        }
-
-        // --- Confetti FX ---
-        function triggerConfetti() {
-            var count = 200;
-            var defaults = {
-                origin: { y: 0.7 }
-            };
-
-            function fire(particleRatio, opts) {
-                confetti(Object.assign({}, defaults, opts, {
-                    particleCount: Math.floor(count * particleRatio)
-                }));
-            }
-
-            fire(0.25, { spread: 26, startVelocity: 55 });
-            fire(0.2, { spread: 60 });
-            fire(0.35, { spread: 100, decay: 0.91, scalar: 0.8 });
-            fire(0.1, { spread: 120, startVelocity: 25, decay: 0.92, scalar: 1.2 });
-            fire(0.1, { spread: 120, startVelocity: 45 });
-        }
-
-        // --- Video Modal ---
-        function openVideo(startSeconds, endSeconds) {
-            const modal = document.getElementById('video-modal');
-            const iframe = document.getElementById('youtube-iframe');
-            
-            const videoId = "CgGiyfv7Xpc";
-            const embedUrl = `https://www.youtube.com/embed/${videoId}?start=${startSeconds}&end=${endSeconds}&autoplay=1&rel=0`;
-            
-            iframe.src = embedUrl;
-            modal.classList.remove('hidden');
-            document.body.style.overflow = 'hidden';
-        }
-
-        function closeVideo() {
-            const modal = document.getElementById('video-modal');
-            const iframe = document.getElementById('youtube-iframe');
-            iframe.src = "";
-            modal.classList.add('hidden');
-            document.body.style.overflow = 'auto';
-        }
-
-        document.addEventListener('keydown', (e) => {
-            if (e.key === "Escape") closeVideo();
-        });
-
-        document.getElementById('video-modal').addEventListener('click', (e) => {
-            if (e.target.id === 'video-modal') closeVideo();
-        });
 
         // --- Renderizado ---
         function saveAndRender() {
-            localStorage.setItem('atomicHabitsProgressHTML', JSON.stringify(completed));
             updateProgressUI();
             renderList();
         }
 
         function updateProgressUI() {
+            const sections = library[currentBookId].sections;
             const totalItems = sections.reduce((acc, section) => acc + section.items.length, 0);
-            const percentage = Math.round((completed.length / totalItems) * 100);
+            const percentage = totalItems === 0 ? 0 : Math.round((completed.length / totalItems) * 100);
             
             let listenedSeconds = 0;
+            let totalBookSeconds = 0;
+
             sections.forEach(section => {
                 section.items.forEach(item => {
+                    const duration = getItemDuration(item);
+                    totalBookSeconds += duration;
                     if (completed.includes(item.id)) {
-                        listenedSeconds += getItemDuration(item);
+                        listenedSeconds += duration;
                     }
                 });
             });
@@ -412,10 +359,11 @@
         function renderList() {
             const container = document.getElementById('app-container');
             container.innerHTML = '';
-
+            
+            const sections = library[currentBookId].sections;
             let firstUncompletedFound = false;
 
-            sections.forEach((section, index) => {
+            sections.forEach((section) => {
                 const sectionEl = document.createElement('div');
                 sectionEl.className = 'fade-in';
                 
@@ -430,6 +378,7 @@
                 section.items.forEach(item => {
                     const isCompleted = completed.includes(item.id);
                     const durationStr = formatDuration(getItemDuration(item));
+                    const startSeconds = parseTimeStr(item.start);
                     const endSeconds = parseTimeStr(item.end);
 
                     let isNextUp = false;
@@ -466,7 +415,7 @@
                             </div>
                         </div>
 
-                        <button onclick="openVideo(${item.seconds}, ${endSeconds}); event.stopPropagation();" 
+                        <button onclick="openVideo('${item.start}', '${item.end}'); event.stopPropagation();" 
                                 class="ml-4 p-2 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 rounded-full hover:bg-amber-500 dark:hover:bg-amber-600 hover:text-white transition-all shadow-sm group-hover:shadow-md flex items-center gap-2"
                                 title="Ver en YouTube">
                             <i data-lucide="play" class="w-4 h-4 fill-current"></i>
@@ -483,11 +432,84 @@
             lucide.createIcons();
         }
 
-        // Inicialización
+        // --- Video Modal ---
+        function openVideo(startStr, endStr) {
+            const startSeconds = parseTimeStr(startStr);
+            const endSeconds = parseTimeStr(endStr);
+            const videoId = library[currentBookId].videoId;
+            
+            const modal = document.getElementById('video-modal');
+            const iframe = document.getElementById('youtube-iframe');
+            
+            const embedUrl = `https://www.youtube.com/embed/${videoId}?start=${startSeconds}&end=${endSeconds}&autoplay=1&rel=0`;
+            
+            iframe.src = embedUrl;
+            modal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeVideo() {
+            const modal = document.getElementById('video-modal');
+            const iframe = document.getElementById('youtube-iframe');
+            iframe.src = "";
+            modal.classList.add('hidden');
+            document.body.style.overflow = 'auto';
+        }
+
+        // Event Listeners
+        document.addEventListener('keydown', (e) => { if (e.key === "Escape") closeVideo(); });
+        document.getElementById('video-modal').addEventListener('click', (e) => { if (e.target.id === 'video-modal') closeVideo(); });
+
+        // --- Utils ---
+        function initDarkMode() {
+            const isDark = localStorage.getItem('theme') === 'dark' || 
+                          (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches);
+            updateTheme(isDark);
+        }
+
+        function toggleDarkMode() {
+            const html = document.documentElement;
+            const isDark = html.classList.contains('dark');
+            updateTheme(!isDark);
+        }
+
+        function updateTheme(isDark) {
+            const html = document.documentElement;
+            if (isDark) {
+                html.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                html.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            }
+        }
+
+        function triggerConfetti() {
+            var count = 200;
+            var defaults = { origin: { y: 0.7 } };
+            function fire(particleRatio, opts) {
+                confetti(Object.assign({}, defaults, opts, {
+                    particleCount: Math.floor(count * particleRatio)
+                }));
+            }
+            fire(0.25, { spread: 26, startVelocity: 55 });
+            fire(0.2, { spread: 60 });
+            fire(0.35, { spread: 100, decay: 0.91, scalar: 0.8 });
+            fire(0.1, { spread: 120, startVelocity: 25, decay: 0.92, scalar: 1.2 });
+            fire(0.1, { spread: 120, startVelocity: 45 });
+        }
+
+        // Init
         document.addEventListener('DOMContentLoaded', () => {
             initDarkMode();
-            loadRandomQuote();
-            saveAndRender();
+            
+            // Migrar datos antiguos si existen
+            const oldData = localStorage.getItem('atomicHabitsProgressHTML');
+            if (oldData && !localStorage.getItem('progress_habitosAtomicos')) {
+                localStorage.setItem('progress_habitosAtomicos', oldData);
+            }
+
+            switchBook(currentBookId);
         });
 
     </script>
