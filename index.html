@@ -68,7 +68,7 @@
             }
             /* Corrección específica para acercar secciones en impresión */
             .section-spacer {
-                margin-bottom: 1rem !important; /* Fuerza un margen pequeño entre secciones */
+                margin-bottom: 1rem !important; 
             }
         }
     </style>
@@ -78,10 +78,8 @@
     <!-- Controles de Impresión -->
     <div class="no-print fixed top-5 right-5 z-50 flex flex-col items-end gap-2">
         <div class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 shadow-lg rounded max-w-xs mb-2 text-sm">
-            <p class="font-bold">Ajuste de Espacios</p>
-            <p>Secciones académicas compactadas.</p>
-            <p>1. Clic en botón azul.</p>
-            <p>2. Elige "Guardar como PDF".</p>
+            <p class="font-bold">Foto Agregada</p>
+            <p>La imagen se carga desde GitHub.</p>
         </div>
         <button onclick="window.print()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-full shadow-lg flex items-center gap-2 transition-all transform hover:scale-105 cursor-pointer">
             <i class="fas fa-file-pdf"></i> Guardar como PDF
@@ -97,10 +95,8 @@
                 <!-- Foto -->
                 <div class="mb-6 flex justify-center">
                     <div class="w-32 h-32 bg-slate-700 rounded-full flex items-center justify-center overflow-hidden border-4 border-slate-600 shadow-xl relative">
-                        <i class="fas fa-user text-5xl text-slate-400"></i>
-                        <div class="no-print absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 text-xs text-center p-2 opacity-0 hover:opacity-100 transition-opacity">
-                            Pegar foto aquí
-                        </div>
+                        <!-- Imagen cargada desde GitHub usando raw=true -->
+                        <img src="https://github.com/juanmiguel0927/Piloto/blob/2b3144dee1917dbf4c5884ca3521a2692e606652/Foto%20Edwin.jpeg?raw=true" alt="Edwin Ortiz" class="w-full h-full object-cover">
                     </div>
                 </div>
 
@@ -208,7 +204,7 @@
                 </div>
             </div>
 
-            <!-- Formación Académica (Espacio ajustado) -->
+            <!-- Formación Académica -->
             <div class="mb-4 section-spacer">
                 <div class="flex items-center gap-2 mb-2">
                     <div class="p-1.5 bg-blue-100 rounded text-blue-700">
@@ -228,7 +224,7 @@
                 </div>
             </div>
 
-            <!-- Cursos y Certificaciones (Sin espacio 'auto', pegado a lo anterior) -->
+            <!-- Cursos y Certificaciones -->
             <div>
                 <div class="flex items-center gap-2 mb-2">
                     <div class="p-1.5 bg-blue-100 rounded text-blue-700">
