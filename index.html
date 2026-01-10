@@ -34,6 +34,21 @@
         }
         .next-up .next-badge { display: inline-flex; }
         .item-row:not(.next-up) .next-badge { display: none; }
+
+        /* Estilos del Modal de Video */
+        #video-modal {
+            transition: opacity 0.3s ease-in-out;
+        }
+        #video-modal.hidden {
+            display: none;
+            opacity: 0;
+            pointer-events: none;
+        }
+        #video-modal:not(.hidden) {
+            display: flex;
+            opacity: 1;
+            pointer-events: auto;
+        }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800 font-sans pb-12">
@@ -69,8 +84,8 @@
             <h2 class="text-lg font-semibold mb-2 text-slate-800">Tu progreso de lectura</h2>
             <p class="text-slate-600 text-sm leading-relaxed">
                 Esta herramienta guarda tu progreso automáticamente.
-                Haz clic en <span class="inline-flex items-center bg-amber-100 text-amber-700 rounded px-1.5 py-0.5 text-xs font-bold mx-1"><i data-lucide="play" class="w-3 h-3 mr-1"></i> Ver</span> para ir al minuto exacto en YouTube. 
-                El capítulo marcado como <strong>"Siguiente"</strong> es tu próximo paso.
+                Haz clic en <span class="inline-flex items-center bg-amber-100 text-amber-700 rounded px-1.5 py-0.5 text-xs font-bold mx-1"><i data-lucide="play" class="w-3 h-3 mr-1"></i> Ver</span> para reproducir el capítulo. 
+                El video <strong>se detendrá automáticamente</strong> al finalizar la sección.
             </p>
         </div>
 
@@ -85,6 +100,36 @@
                 <i data-lucide="rotate-ccw" class="w-3 h-3"></i> Reiniciar todo el progreso
             </button>
             <p class="text-slate-400 text-xs">Basado en el audiolibro de James Clear.</p>
+        </div>
+    </div>
+
+    <!-- Modal de Video -->
+    <div id="video-modal" class="hidden fixed inset-0 z-50 items-center justify-center bg-black/90 p-4 backdrop-blur-sm">
+        <div class="bg-black w-full max-w-4xl rounded-xl overflow-hidden shadow-2xl relative flex flex-col">
+            <!-- Header del Modal -->
+            <div class="flex items-center justify-between p-3 bg-slate-900 text-white border-b border-slate-800">
+                <span class="text-sm font-medium flex items-center gap-2">
+                    <i data-lucide="youtube" class="w-4 h-4 text-red-500"></i> Reproduciendo Capítulo
+                </span>
+                <button onclick="closeVideo()" class="text-slate-400 hover:text-white transition-colors p-1 hover:bg-white/10 rounded-full">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            
+            <!-- Contenedor del Iframe (Aspect Ratio 16:9) -->
+            <div class="relative w-full aspect-video bg-black">
+                <iframe id="youtube-iframe" 
+                        class="absolute top-0 left-0 w-full h-full"
+                        src="" 
+                        title="YouTube video player" 
+                        frameborder="0" 
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                        allowfullscreen>
+                </iframe>
+            </div>
+            <div class="p-2 bg-slate-900 text-center text-xs text-slate-500">
+                El video se pausará automáticamente al terminar la sección.
+            </div>
         </div>
     </div>
 
@@ -205,9 +250,45 @@
             }
         }
 
-        function openVideo(seconds) {
-            window.open(`https://youtu.be/CgGiyfv7Xpc?t=${seconds}s`, '_blank');
+        // --- Nueva Lógica de Video Modal ---
+        
+        function openVideo(startSeconds, endSeconds) {
+            const modal = document.getElementById('video-modal');
+            const iframe = document.getElementById('youtube-iframe');
+            
+            // Construir URL con start y end (para que pare solo)
+            // Agregamos autoplay=1 para que empiece solo
+            const videoId = "CgGiyfv7Xpc";
+            const embedUrl = `https://www.youtube.com/embed/${videoId}?start=${startSeconds}&end=${endSeconds}&autoplay=1&rel=0`;
+            
+            iframe.src = embedUrl;
+            modal.classList.remove('hidden');
+            
+            // Prevenir scroll en el fondo
+            document.body.style.overflow = 'hidden';
         }
+
+        function closeVideo() {
+            const modal = document.getElementById('video-modal');
+            const iframe = document.getElementById('youtube-iframe');
+            
+            // Limpiar src para detener el video
+            iframe.src = "";
+            modal.classList.add('hidden');
+            
+            // Restaurar scroll
+            document.body.style.overflow = 'auto';
+        }
+
+        // Cerrar modal con tecla ESC
+        document.addEventListener('keydown', (e) => {
+            if (e.key === "Escape") closeVideo();
+        });
+
+        // Cerrar modal haciendo click fuera del video
+        document.getElementById('video-modal').addEventListener('click', (e) => {
+            if (e.target.id === 'video-modal') closeVideo();
+        });
 
         function saveAndRender() {
             localStorage.setItem('atomicHabitsProgressHTML', JSON.stringify(completed));
@@ -259,6 +340,9 @@
                     const isCompleted = completed.includes(item.id);
                     const durationStr = formatDuration(getItemDuration(item));
                     
+                    // Convertir el tiempo final string a segundos para pasarlo a la función openVideo
+                    const endSeconds = parseTimeStr(item.end);
+
                     // Determinar si es el "Siguiente" item (el primero no completado)
                     let isNextUp = false;
                     if (!isCompleted && !firstUncompletedFound) {
@@ -293,7 +377,7 @@
                             </div>
                         </div>
 
-                        <button onclick="openVideo(${item.seconds})" 
+                        <button onclick="openVideo(${item.seconds}, ${endSeconds})" 
                                 class="ml-4 p-2 bg-amber-100 text-amber-700 rounded-full hover:bg-amber-500 hover:text-white transition-all shadow-sm group-hover:shadow-md flex items-center gap-2"
                                 title="Ver en YouTube">
                             <i data-lucide="play" class="w-4 h-4 fill-current"></i>
