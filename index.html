@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tracker de Audiolibros</title>
+    <title>Tracker de Audiolibros & Estadísticas</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -13,10 +13,12 @@
             theme: {
                 extend: {
                     colors: {
-                        slate: {
-                            850: '#1e293b',
-                            950: '#020617',
-                        }
+                        slate: { 850: '#1e293b', 950: '#020617' },
+                        amber: { 450: '#f59e0b' }
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'spin-slow': 'spin 3s linear infinite',
                     }
                 }
             }
@@ -31,10 +33,7 @@
     <style>
         .transition-width { transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
         .fade-in { animation: fadeIn 0.5s ease-out; }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         
         /* Checkbox Styles */
         .check-btn:hover .icon-circle { opacity: 0; }
@@ -50,33 +49,36 @@
         .item-row:not(.next-up) .next-badge { display: none; }
 
         /* Modal */
-        #video-modal { transition: opacity 0.3s ease-in-out; }
-        #video-modal.hidden { display: none; opacity: 0; pointer-events: none; }
-        #video-modal:not(.hidden) { display: flex; opacity: 1; pointer-events: auto; }
+        .modal-overlay { transition: opacity 0.3s ease-in-out; }
+        .modal-overlay.hidden { display: none; opacity: 0; pointer-events: none; }
+        .modal-overlay:not(.hidden) { display: flex; opacity: 1; pointer-events: auto; }
 
         /* Tabs */
-        .tab-btn.active { 
-            border-bottom: 2px solid #f59e0b; 
-            color: #f59e0b; 
-            font-weight: 600;
-        }
-        .tab-btn:not(.active) {
-            color: #64748b;
-            border-bottom: 2px solid transparent;
-        }
+        .tab-btn { position: relative; }
+        .tab-btn.active { color: #f59e0b; font-weight: 600; }
+        .tab-btn.active::after { content: ''; position: absolute; bottom: 0; left: 0; width: 100%; height: 2px; background-color: #f59e0b; }
+        .tab-btn:not(.active) { color: #64748b; }
         .dark .tab-btn:not(.active) { color: #94a3b8; }
-        .dark .tab-btn:not(.active):hover { color: #cbd5e1; }
         
         /* Hide Scrollbar */
         .scrollbar-hide::-webkit-scrollbar { display: none; }
         .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* Chart Bars Animation */
+        .chart-bar { transition: height 1s ease-out; }
+
+        /* Pie Chart CSS */
+        .pie-chart {
+            background: conic-gradient(var(--pie-gradient));
+            border-radius: 50%;
+        }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800 font-sans pb-12 transition-colors duration-300 dark:bg-slate-950 dark:text-slate-200">
 
     <!-- Header Fijo -->
     <div class="sticky top-0 z-10 bg-white shadow-sm border-b border-slate-200 dark:bg-slate-900 dark:border-slate-800 transition-colors duration-300">
-        <div class="max-w-3xl mx-auto px-4 pt-4 pb-0">
+        <div class="max-w-4xl mx-auto px-4 pt-4 pb-0">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-3">
                 <div class="flex items-center gap-3">
                     <h1 class="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
@@ -90,75 +92,200 @@
                 </div>
 
                 <div class="flex items-center gap-3 text-sm">
-                     <div class="flex flex-col items-end">
-                        <span id="progress-text" class="font-bold text-amber-600 dark:text-amber-500">0% Completado</span>
-                        <span id="time-text" class="text-xs text-slate-500 dark:text-slate-400 font-mono">0h 0m / 0h 0m</span>
-                     </div>
+                    <button onclick="showStats()" class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-amber-50 dark:bg-slate-800 text-amber-700 dark:text-amber-500 hover:bg-amber-100 dark:hover:bg-slate-700 transition-colors font-medium">
+                        <i data-lucide="pie-chart" class="w-4 h-4"></i> Mi Balance
+                    </button>
                 </div>
             </div>
             
-            <!-- Barra de Progreso -->
-            <div class="w-full bg-slate-200 dark:bg-slate-800 rounded-full h-2.5 overflow-hidden mb-4">
-                <div id="progress-bar" class="bg-amber-500 h-2.5 rounded-full transition-width relative" style="width: 0%">
-                    <div class="absolute inset-0 bg-white/20 animate-pulse"></div>
-                </div>
+            <!-- Barra de Progreso Global (Visual) -->
+            <div class="w-full bg-slate-200 dark:bg-slate-800 rounded-full h-1.5 overflow-hidden mb-4">
+                <div id="global-progress-bar" class="bg-amber-500 h-1.5 rounded-full transition-width" style="width: 0%"></div>
             </div>
 
             <!-- Navegación de Pestañas -->
             <div class="flex space-x-6 overflow-x-auto scrollbar-hide">
-                <button onclick="switchBook('habitosAtomicos')" id="tab-habitosAtomicos" class="tab-btn pb-3 px-1 text-sm whitespace-nowrap transition-colors">
+                <button onclick="switchView('library')" id="tab-library" class="tab-btn pb-3 px-1 text-sm whitespace-nowrap transition-colors active">
+                    Biblioteca
+                </button>
+                <button onclick="switchView('stats')" id="tab-stats" class="tab-btn pb-3 px-1 text-sm whitespace-nowrap transition-colors">
+                    Estadísticas & Logros
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contenedor Principal -->
+    <div class="max-w-4xl mx-auto px-4 mt-6">
+
+        <!-- VISTA: BIBLIOTECA -->
+        <div id="view-library" class="fade-in">
+            <!-- Selector de Libros (Sub-tabs) -->
+            <div class="flex space-x-2 overflow-x-auto scrollbar-hide mb-6 pb-2">
+                <button onclick="switchBook('habitosAtomicos')" id="book-btn-habitosAtomicos" class="book-select-btn px-4 py-2 rounded-full text-xs font-medium bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 whitespace-nowrap transition-all">
                     Hábitos Atómicos
                 </button>
-                <button onclick="switchBook('cosasBuenas')" id="tab-cosasBuenas" class="tab-btn pb-3 px-1 text-sm whitespace-nowrap transition-colors">
+                <button onclick="switchBook('cosasBuenas')" id="book-btn-cosasBuenas" class="book-select-btn px-4 py-2 rounded-full text-xs font-medium bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 whitespace-nowrap transition-all">
                     Cosas Buenas
                 </button>
-                <button onclick="switchBook('sieteHabitos')" id="tab-sieteHabitos" class="tab-btn pb-3 px-1 text-sm whitespace-nowrap transition-colors">
+                <button onclick="switchBook('sieteHabitos')" id="book-btn-sieteHabitos" class="book-select-btn px-4 py-2 rounded-full text-xs font-medium bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 whitespace-nowrap transition-all">
                     7 Hábitos
                 </button>
-                <button onclick="switchBook('personaVitamina')" id="tab-personaVitamina" class="tab-btn pb-3 px-1 text-sm whitespace-nowrap transition-colors">
+                <button onclick="switchBook('personaVitamina')" id="book-btn-personaVitamina" class="book-select-btn px-4 py-2 rounded-full text-xs font-medium bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 whitespace-nowrap transition-all">
                     Persona Vitamina
                 </button>
             </div>
-        </div>
-    </div>
 
-    <div class="max-w-3xl mx-auto px-4 mt-6">
-        
-        <!-- Quote Card -->
-        <div id="quote-card" class="bg-amber-50 dark:bg-slate-900 border-l-4 border-amber-400 p-4 mb-8 rounded-r-xl shadow-sm fade-in flex gap-3 items-start">
-            <i data-lucide="quote" class="w-8 h-8 text-amber-300 flex-shrink-0 mt-1"></i>
-            <div>
-                <p id="quote-text" class="text-slate-700 dark:text-slate-300 italic text-sm font-medium mb-1">
-                    Cargando...
-                </p>
-                <p id="quote-author" class="text-slate-400 dark:text-slate-500 text-xs"></p>
+            <!-- Quote Card -->
+            <div id="quote-card" class="bg-amber-50 dark:bg-slate-900 border-l-4 border-amber-400 p-4 mb-6 rounded-r-xl shadow-sm flex gap-3 items-start">
+                <i data-lucide="quote" class="w-8 h-8 text-amber-300 flex-shrink-0 mt-1"></i>
+                <div>
+                    <p id="quote-text" class="text-slate-700 dark:text-slate-300 italic text-sm font-medium mb-1">Cargando...</p>
+                    <p id="quote-author" class="text-slate-400 dark:text-slate-500 text-xs"></p>
+                </div>
+            </div>
+
+            <!-- Info del Libro Actual -->
+            <div class="flex items-end justify-between mb-4 px-1">
+                <div>
+                    <h2 id="book-title-display" class="text-xl font-bold text-slate-800 dark:text-white leading-tight"></h2>
+                    <p id="book-author-display" class="text-sm text-amber-600 dark:text-amber-500"></p>
+                </div>
+                <div class="text-right">
+                    <span id="book-progress-text" class="text-2xl font-bold text-slate-700 dark:text-slate-200">0%</span>
+                    <p id="book-time-text" class="text-xs text-slate-400 font-mono">0h / 0h</p>
+                </div>
+            </div>
+
+            <!-- Lista de Capítulos -->
+            <div id="app-container" class="space-y-6 pb-8">
+                <!-- Se genera con JS -->
+            </div>
+            
+            <!-- Reset Button -->
+             <div class="mt-8 mb-12 text-center border-t border-slate-200 dark:border-slate-800 pt-8">
+                <button onclick="resetCurrentBook()" class="text-xs text-slate-400 hover:text-red-500 underline transition-colors mb-4 flex items-center justify-center gap-1 mx-auto">
+                    <i data-lucide="rotate-ccw" class="w-3 h-3"></i> Reiniciar este libro
+                </button>
             </div>
         </div>
 
-        <!-- Book Title Card -->
-        <div class="bg-white dark:bg-slate-900 p-6 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 mb-8 fade-in transition-colors duration-300">
-            <h2 id="book-title-display" class="text-lg font-semibold mb-1 text-slate-800 dark:text-white"></h2>
-            <p id="book-author-display" class="text-sm text-amber-600 dark:text-amber-500 mb-2"></p>
-            <p class="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
-                Haz clic en <span class="inline-flex items-center bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300 rounded px-1.5 py-0.5 text-xs font-bold mx-1"><i data-lucide="play" class="w-3 h-3 mr-1"></i> Ver</span> para reproducir el capítulo.
-            </p>
+        <!-- VISTA: ESTADÍSTICAS (BALANCE) -->
+        <div id="view-stats" class="hidden fade-in space-y-8">
+            
+            <!-- Meta Diaria (Ring) -->
+            <div class="bg-white dark:bg-slate-900 p-6 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden">
+                <div class="z-10 flex-1">
+                    <h3 class="text-lg font-bold text-slate-800 dark:text-white mb-1 flex items-center gap-2">
+                        <i data-lucide="target" class="w-5 h-5 text-red-500"></i> Meta Diaria
+                    </h3>
+                    <p class="text-slate-500 dark:text-slate-400 text-sm mb-4">"Pequeños pasos, grandes resultados".</p>
+                    
+                    <div class="flex items-center gap-3">
+                        <button onclick="adjustDailyGoal(-5)" class="p-1 rounded bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500"><i data-lucide="minus" class="w-4 h-4"></i></button>
+                        <span id="daily-goal-target" class="font-mono font-bold text-xl w-16 text-center">30m</span>
+                        <button onclick="adjustDailyGoal(5)" class="p-1 rounded bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500"><i data-lucide="plus" class="w-4 h-4"></i></button>
+                    </div>
+                </div>
+
+                <!-- Progress Ring -->
+                <div class="relative w-32 h-32 flex items-center justify-center">
+                    <svg class="transform -rotate-90 w-32 h-32">
+                        <circle cx="64" cy="64" r="56" stroke="currentColor" stroke-width="8" fill="transparent" class="text-slate-100 dark:text-slate-800" />
+                        <circle id="daily-progress-ring" cx="64" cy="64" r="56" stroke="currentColor" stroke-width="8" fill="transparent" stroke-dasharray="351.86" stroke-dashoffset="351.86" class="text-amber-500 transition-all duration-1000 ease-out" />
+                    </svg>
+                    <div class="absolute inset-0 flex flex-col items-center justify-center">
+                        <span id="daily-progress-val" class="text-2xl font-bold text-slate-800 dark:text-white">0%</span>
+                        <span class="text-[10px] text-slate-400 uppercase">Completado</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Resumen de Métricas -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="bg-white dark:bg-slate-900 p-4 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800">
+                    <div class="flex items-center gap-2 mb-2 text-slate-500 dark:text-slate-400">
+                        <i data-lucide="clock" class="w-4 h-4 text-blue-500"></i> <span class="text-xs font-bold uppercase">Hoy</span>
+                    </div>
+                    <p id="stat-today" class="text-2xl font-bold text-slate-800 dark:text-white">0m</p>
+                </div>
+                <div class="bg-white dark:bg-slate-900 p-4 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800">
+                    <div class="flex items-center gap-2 mb-2 text-slate-500 dark:text-slate-400">
+                        <i data-lucide="flame" class="w-4 h-4 text-orange-500"></i> <span class="text-xs font-bold uppercase">Racha</span>
+                    </div>
+                    <p id="stat-streak" class="text-2xl font-bold text-slate-800 dark:text-white">0 días</p>
+                </div>
+                <div class="bg-white dark:bg-slate-900 p-4 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800">
+                    <div class="flex items-center gap-2 mb-2 text-slate-500 dark:text-slate-400">
+                        <i data-lucide="book-open" class="w-4 h-4 text-purple-500"></i> <span class="text-xs font-bold uppercase">Caps</span>
+                    </div>
+                    <p id="stat-chapters" class="text-2xl font-bold text-slate-800 dark:text-white">0</p>
+                </div>
+                <div class="bg-white dark:bg-slate-900 p-4 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800">
+                    <div class="flex items-center gap-2 mb-2 text-slate-500 dark:text-slate-400">
+                        <i data-lucide="award" class="w-4 h-4 text-amber-500"></i> <span class="text-xs font-bold uppercase">Nivel</span>
+                    </div>
+                    <p id="stat-level" class="text-lg font-bold text-slate-800 dark:text-white">Novato</p>
+                </div>
+            </div>
+
+            <!-- Balance de Lectura (Pie Chart) & Actividad Semanal -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Pie Chart -->
+                <div class="bg-white dark:bg-slate-900 p-6 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col">
+                    <h3 class="text-sm font-bold text-slate-700 dark:text-slate-300 mb-6 flex items-center gap-2">
+                        <i data-lucide="pie-chart" class="w-4 h-4"></i> Balance de Temas
+                    </h3>
+                    <div class="flex items-center justify-center gap-8">
+                        <div id="distribution-pie" class="pie-chart w-32 h-32 shadow-inner" style="--pie-gradient: #e2e8f0 0% 100%;"></div>
+                        <div id="distribution-legend" class="text-xs space-y-2">
+                            <!-- Legend items generated by JS -->
+                            <span class="text-slate-400 italic">Sin datos aún</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Weekly Chart -->
+                <div class="bg-white dark:bg-slate-900 p-6 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col">
+                    <h3 class="text-sm font-bold text-slate-700 dark:text-slate-300 mb-6 flex items-center gap-2">
+                        <i data-lucide="bar-chart-2" class="w-4 h-4"></i> Últimos 7 días
+                    </h3>
+                    <div id="weekly-chart" class="flex items-end justify-between h-32 gap-2 mt-auto">
+                        <!-- Bars generated by JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Logros (Achievements) -->
+            <div class="bg-white dark:bg-slate-900 p-6 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800">
+                <h3 class="text-sm font-bold text-slate-700 dark:text-slate-300 mb-4 flex items-center gap-2">
+                    <i data-lucide="trophy" class="w-4 h-4 text-yellow-500"></i> Sala de Trofeos
+                </h3>
+                <div id="achievements-container" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                    <!-- Achievements generated by JS -->
+                </div>
+            </div>
+
+            <!-- Exportar/Importar Datos -->
+            <div class="text-center pt-8 border-t border-slate-100 dark:border-slate-800 flex flex-col items-center gap-2">
+                <p class="text-xs text-slate-400 mb-2">Gestión de Datos</p>
+                <div class="flex gap-4">
+                    <button onclick="exportData()" class="flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-lg text-xs font-medium transition-colors">
+                        <i data-lucide="download" class="w-4 h-4"></i> Exportar Copia
+                    </button>
+                    <button onclick="triggerImport()" class="flex items-center gap-2 px-4 py-2 bg-amber-100 dark:bg-amber-900/30 hover:bg-amber-200 dark:hover:bg-amber-900/50 text-amber-700 dark:text-amber-400 rounded-lg text-xs font-medium transition-colors">
+                        <i data-lucide="upload" class="w-4 h-4"></i> Importar Copia
+                    </button>
+                </div>
+                <input type="file" id="import-file" class="hidden" accept=".json" onchange="handleFileImport(event)">
+            </div>
+
         </div>
 
-        <!-- Contenedor de la lista -->
-        <div id="app-container" class="space-y-8 pb-8">
-            <!-- El contenido se generará aquí con JavaScript -->
-        </div>
-
-        <!-- Botón Reset -->
-        <div class="mt-8 mb-12 text-center fade-in border-t border-slate-200 dark:border-slate-800 pt-8">
-            <button onclick="resetProgress()" class="text-xs text-slate-400 hover:text-red-500 underline transition-colors mb-4 flex items-center justify-center gap-1 mx-auto">
-                <i data-lucide="rotate-ccw" class="w-3 h-3"></i> Reiniciar progreso de este libro
-            </button>
-        </div>
     </div>
 
     <!-- Modal de Video -->
-    <div id="video-modal" class="hidden fixed inset-0 z-50 items-center justify-center bg-black/90 p-4 backdrop-blur-sm">
+    <div id="video-modal" class="modal-overlay hidden fixed inset-0 z-50 items-center justify-center bg-black/90 p-4 backdrop-blur-sm">
         <div class="bg-black w-full max-w-4xl rounded-xl overflow-hidden shadow-2xl relative flex flex-col border border-slate-800">
             <div class="flex items-center justify-between p-3 bg-slate-900 text-white border-b border-slate-800">
                 <span class="text-sm font-medium flex items-center gap-2">
@@ -174,304 +301,282 @@
         </div>
     </div>
 
-    <!-- Lógica de la Aplicación -->
+    <!-- Modal de Notas -->
+    <div id="notes-modal" class="modal-overlay hidden fixed inset-0 z-50 items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+        <div class="bg-white dark:bg-slate-900 w-full max-w-lg rounded-xl shadow-2xl flex flex-col border border-slate-200 dark:border-slate-800">
+            <div class="flex items-center justify-between p-4 border-b border-slate-100 dark:border-slate-800">
+                <h3 class="font-bold text-slate-800 dark:text-white flex items-center gap-2">
+                    <i data-lucide="pen-tool" class="w-4 h-4 text-amber-500"></i> Notas del Capítulo
+                </h3>
+                <button onclick="closeNotes()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <div class="p-4">
+                <p id="note-chapter-title" class="text-xs text-slate-500 mb-2 font-medium">Capítulo...</p>
+                <textarea id="note-textarea" class="w-full h-40 p-3 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 text-sm focus:ring-2 focus:ring-amber-500 outline-none resize-none" placeholder="Escribe aquí tus reflexiones, ideas clave o frases que quieras recordar..."></textarea>
+            </div>
+            <div class="p-4 border-t border-slate-100 dark:border-slate-800 flex justify-end">
+                <button onclick="saveNote()" class="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-sm font-medium transition-colors">Guardar Nota</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- DATA & LOGIC -->
     <script>
-        // --- Datos de los Libros ---
+        // --- CONFIG & STATE ---
         const library = {
             habitosAtomicos: {
                 title: "Hábitos Atómicos",
                 author: "James Clear",
+                color: "#ef4444", // Red
                 videoId: "CgGiyfv7Xpc",
-                quotes: [
-                    "No te elevas al nivel de tus metas. Caes al nivel de tus sistemas.",
-                    "Los hábitos son el interés compuesto de la superación personal.",
-                    "Cada acción que tomas es un voto por el tipo de persona en la que deseas convertirte.",
-                    "Hazlo obvio. Hazlo atractivo. Hazlo sencillo. Hazlo satisfactorio.",
-                    "Un 1% mejor cada día, termina siendo 37 veces mejor al final del año."
-                ],
+                quotes: ["No te elevas al nivel de tus metas. Caes al nivel de tus sistemas.", "Los hábitos son el interés compuesto de la superación personal."],
                 sections: [
-                    { title: "Introducción", items: [{ id: 0, title: "Introducción: Mi historia", start: "00:00:00", end: "00:26:50" }] },
-                    { title: "Principios Fundamentales", items: [
-                        { id: 1, title: "1. El sorprendente poder de los hábitos atómicos", start: "00:27:05", end: "01:05:30" },
-                        { id: 2, title: "2. La manera en que tus hábitos moldean tu identidad", start: "01:05:30", end: "01:36:11" },
-                        { id: 3, title: "3. Cómo construir mejores hábitos en 4 pasos", start: "01:36:11", end: "02:07:09" }
+                    { title: "Intro", items: [{ id: 0, title: "Introducción: Mi historia", start: "00:00:00", end: "00:26:50" }] },
+                    { title: "Principios", items: [
+                        { id: 1, title: "1. El poder de los hábitos atómicos", start: "00:27:05", end: "01:05:30" },
+                        { id: 2, title: "2. Hábitos e Identidad", start: "01:05:30", end: "01:36:11" },
+                        { id: 3, title: "3. Construir mejores hábitos en 4 pasos", start: "01:36:11", end: "02:07:09" }
                     ]},
-                    { title: "Primera Ley: Hacerlo Obvio", items: [
+                    { title: "1ª Ley: Obvio", items: [
                         { id: 4, title: "4. El hombre que no se veía bien", start: "02:07:09", end: "02:26:54" },
-                        { id: 5, title: "5. La mejor manera de comenzar un nuevo hábito", start: "02:26:54", end: "02:50:02" },
+                        { id: 5, title: "5. Comenzar un nuevo hábito", start: "02:26:54", end: "02:50:02" },
                         { id: 6, title: "6. La motivación está sobrevalorada", start: "02:50:02", end: "03:12:44" },
                         { id: 7, title: "7. El secreto del autocontrol", start: "03:12:44", end: "03:23:53" }
                     ]},
-                    { title: "Segunda Ley: Hacerlo Atractivo", items: [
-                        { id: 8, title: "8. Cómo lograr que un hábito sea irresistible", start: "03:24:07", end: "03:49:54" },
-                        { id: 9, title: "9. El papel de la familia y los amigos", start: "03:49:54", end: "04:14:32" },
-                        { id: 10, title: "10. Cómo localizar y arreglar malos hábitos", start: "04:14:32", end: "04:36:52" }
+                    { title: "2ª Ley: Atractivo", items: [
+                        { id: 8, title: "8. Hacerlo irresistible", start: "03:24:07", end: "03:49:54" },
+                        { id: 9, title: "9. Familia y amigos", start: "03:49:54", end: "04:14:32" },
+                        { id: 10, title: "10. Arreglar malos hábitos", start: "04:14:32", end: "04:36:52" }
                     ]},
-                    { title: "Tercera Ley: Hacerlo Sencillo", items: [
-                        { id: 11, title: "11. Avanza despacio, pero no des marcha atrás", start: "04:37:06", end: "04:49:33" },
-                        { id: 12, title: "12. La ley del menor esfuerzo", start: "04:49:33", end: "05:13:20" },
-                        { id: 13, title: "13. Cómo dejar de postergar (Regla de 2 min)", start: "05:13:20", end: "05:30:02" },
-                        { id: 14, title: "14. Cómo hacer inevitables los buenos hábitos", start: "05:30:02", end: "05:47:05" }
+                    { title: "3ª Ley: Sencillo", items: [
+                        { id: 11, title: "11. Avanza despacio", start: "04:37:06", end: "04:49:33" },
+                        { id: 12, title: "12. Ley del menor esfuerzo", start: "04:49:33", end: "05:13:20" },
+                        { id: 13, title: "13. Regla de los 2 minutos", start: "05:13:20", end: "05:30:02" },
+                        { id: 14, title: "14. Hacer inevitables los buenos hábitos", start: "05:30:02", end: "05:47:05" }
                     ]},
-                    { title: "Cuarta Ley: Hacerlo Satisfactorio", items: [
-                        { id: 15, title: "15. La regla cardinal del cambio de conducta", start: "05:47:18", end: "06:14:37" },
-                        { id: 16, title: "16. Cómo mantener los buenos hábitos todos los días", start: "06:14:37", end: "06:39:28" },
-                        { id: 17, title: "17. Cómo un socio corresponsable cambia todo", start: "06:39:28", end: "06:54:29" }
+                    { title: "4ª Ley: Satisfactorio", items: [
+                        { id: 15, title: "15. Regla cardinal del cambio", start: "05:47:18", end: "06:14:37" },
+                        { id: 16, title: "16. Mantener hábitos diarios", start: "06:14:37", end: "06:39:28" },
+                        { id: 17, title: "17. Socio corresponsable", start: "06:39:28", end: "06:54:29" }
                     ]},
-                    { title: "Tácticas Avanzadas", items: [
-                        { id: 18, title: "18. La verdad acerca del talento", start: "06:54:43", end: "07:23:04" },
-                        { id: 19, title: "19. La regla de Ricitos de Oro", start: "07:23:04", end: "07:41:26" },
-                        { id: 20, title: "20. El inconveniente de crear buenos hábitos", start: "07:41:26", end: "08:06:22" }
+                    { title: "Avanzadas", items: [
+                        { id: 18, title: "18. Verdad sobre el talento", start: "06:54:43", end: "07:23:04" },
+                        { id: 19, title: "19. Regla de Ricitos de Oro", start: "07:23:04", end: "07:41:26" },
+                        { id: 20, title: "20. Inconveniente buenos hábitos", start: "07:41:26", end: "08:06:22" }
                     ]},
-                    { title: "Conclusión", items: [
-                        { id: 21, title: "Conclusión: El secreto para resultados que duren", start: "08:06:22", end: "08:11:42" }
-                    ]}
+                    { title: "Fin", items: [{ id: 21, title: "Conclusión", start: "08:06:22", end: "08:11:42" }] }
                 ]
             },
             cosasBuenas: {
                 title: "Cómo hacer que te pasen cosas buenas",
                 author: "Marian Rojas Estapé",
+                color: "#3b82f6", // Blue
                 videoId: "UiedpTbutXg",
-                quotes: [
-                    "La felicidad no se define, se experimenta.",
-                    "La felicidad consiste en tener una vida lograda donde intentamos sacar el mejor partido a nuestros valores.",
-                    "La actitud previa a cualquier situación determina cómo respondo a ella.",
-                    "Comprender es aliviar.",
-                    "El sufrimiento es por tanto escuela de fortaleza.",
-                    "No hay guías rápidas ni atajos que aseguren la felicidad."
-                ],
+                quotes: ["La felicidad no se define, se experimenta.", "Comprender es aliviar."],
                 sections: [
-                    { title: "Introducción", items: [
-                        { id: 100, title: "Introducción", start: "00:00:00", end: "00:11:59" }
-                    ]},
-                    { title: "Capítulos", items: [
-                        { id: 101, title: "1. El cerebro humano y nuestros sistemas operativos", start: "00:11:59", end: "00:50:19" },
-                        { id: 102, title: "2. El antídoto al sufrimiento: el amor", start: "00:50:19", end: "01:44:16" },
+                    { title: "Intro", items: [{ id: 100, title: "Introducción", start: "00:00:00", end: "00:11:59" }] },
+                    { title: "Contenido", items: [
+                        { id: 101, title: "1. El cerebro y sistemas operativos", start: "00:11:59", end: "00:50:19" },
+                        { id: 102, title: "2. Antídoto al sufrimiento: amor", start: "00:50:19", end: "01:44:16" },
                         { id: 103, title: "3. El cortisol", start: "01:44:16", end: "02:24:57" },
                         { id: 104, title: "4. Ni lo que pasó ni lo que vendrá", start: "02:24:57", end: "03:35:49" },
                         { id: 105, title: "5. Vivir el momento presente", start: "03:35:49", end: "04:40:38" },
-                        { id: 106, title: "6. Las emociones y su repercusión en la salud", start: "04:40:38", end: "05:37:21" },
-                        { id: 107, title: "7. ¿Qué cosas o actitudes elevan el cortisol?", start: "05:37:21", end: "06:36:28" },
+                        { id: 106, title: "6. Emociones y salud", start: "04:40:38", end: "05:37:21" },
+                        { id: 107, title: "7. ¿Qué eleva el cortisol?", start: "05:37:21", end: "06:36:28" },
                         { id: 108, title: "8. ¿Cómo bajar el cortisol?", start: "06:36:28", end: "07:11:47" },
                         { id: 109, title: "9. Tu mejor versión", start: "07:11:47", end: "07:34:53" }
                     ]}
                 ]
             },
             sieteHabitos: {
-                title: "Los 7 Hábitos de la Gente Altamente Efectiva",
+                title: "Los 7 Hábitos",
                 author: "Stephen R. Covey",
-                videoId: "SXaY1Bz8Ndk", // Video por defecto (Parte 1)
-                quotes: [
-                    "Siembra un pensamiento, cosecha una acción; siembra una acción, cosecha un hábito.",
-                    "Lo que más importa no debe estar a merced de lo que menos importa.",
-                    "Busca primero entender, luego ser entendido.",
-                    "La victoria privada precede a la victoria pública.",
-                    "No soy producto de mis circunstancias, soy producto de mis decisiones."
-                ],
+                color: "#10b981", // Emerald
+                videoId: "SXaY1Bz8Ndk",
+                quotes: ["Siembra un pensamiento, cosecha una acción.", "Busca primero entender, luego ser entendido."],
                 sections: [
-                    // Parte 1 (Video ID SXaY1Bz8Ndk implícito)
-                    { title: "Parte 1: Victoria Privada", items: [
-                        { id: 200, title: "Introducción y Paradigmas", start: "00:00:22", end: "00:23:24" },
-                        { id: 201, title: "Panorama General de los 7 Hábitos", start: "00:23:24", end: "00:36:25" },
-                        { id: 202, title: "Principios y Paradigmas", start: "00:36:25", end: "01:14:16" },
-                        { id: 203, title: "Efectividad y Balance P/CP", start: "01:14:16", end: "01:26:57" },
-                        { id: 204, title: "La Cuenta Bancaria Emocional", start: "01:26:57", end: "01:42:48" },
+                    { title: "Parte 1: Privada", items: [
+                        { id: 200, title: "Intro y Paradigmas", start: "00:00:22", end: "00:23:24" },
+                        { id: 201, title: "Panorama General", start: "00:23:24", end: "00:36:25" },
+                        { id: 202, title: "Principios", start: "00:36:25", end: "01:14:16" },
+                        { id: 203, title: "Balance P/CP", start: "01:14:16", end: "01:26:57" },
+                        { id: 204, title: "Cuenta Bancaria Emocional", start: "01:26:57", end: "01:42:48" },
                         { id: 205, title: "Hábito 1: Ser Proactivo", start: "01:42:48", end: "02:10:10" },
                         { id: 206, title: "Círculo de Influencia", start: "02:10:10", end: "02:38:33" },
-                        { id: 207, title: "Hábito 2: Comenzar con un Fin en Mente", start: "02:38:33", end: "03:22:04" },
-                        { id: 208, title: "Hábito 3: Poner Primero lo Primero", start: "03:22:04", end: "04:01:39" }
+                        { id: 207, title: "Hábito 2: Fin en Mente", start: "02:38:33", end: "03:22:04" },
+                        { id: 208, title: "Hábito 3: Primero lo Primero", start: "03:22:04", end: "04:01:39" }
                     ]},
-                    // Parte 2 (Requiere Video ID específico)
-                    { title: "Parte 2: Victoria Pública", items: [
-                        { id: 209, title: "Hábito 4: Pensar Ganar-Ganar", start: "00:00:24", end: "00:51:31", videoId: "-ucQ4gG25GY" },
-                        { id: 210, title: "Hábito 5: Buscar Primero Entender", start: "00:51:31", end: "01:35:55", videoId: "-ucQ4gG25GY" },
+                    { title: "Parte 2: Pública", items: [
+                        { id: 209, title: "Hábito 4: Ganar-Ganar", start: "00:00:24", end: "00:51:31", videoId: "-ucQ4gG25GY" },
+                        { id: 210, title: "Hábito 5: Entender", start: "00:51:31", end: "01:35:55", videoId: "-ucQ4gG25GY" },
                         { id: 211, title: "Hábito 6: Sinergizar", start: "01:35:55", end: "02:24:05", videoId: "-ucQ4gG25GY" },
                         { id: 212, title: "Hábito 7: Afilar la Sierra", start: "02:24:05", end: "02:48:07", videoId: "-ucQ4gG25GY" },
-                        { id: 213, title: "Conclusión y Reprogramación", start: "02:48:07", end: "03:01:50", videoId: "-ucQ4gG25GY" }
+                        { id: 213, title: "Conclusión", start: "02:48:07", end: "03:01:50", videoId: "-ucQ4gG25GY" }
                     ]}
                 ]
             },
             personaVitamina: {
                 title: "Encuentra tu persona vitamina",
                 author: "Marian Rojas Estapé",
+                color: "#ec4899", // Pink
                 videoId: "26Atrg0YyVE",
-                quotes: [
-                    "Comprender es aliviar.",
-                    "Estamos diseñados para convivir, para vincularnos, tratarnos y querernos.",
-                    "La felicidad depende en gran medida de la capacidad para tener buenas relaciones.",
-                    "Sé y rodéate siempre de personas vitamina.",
-                    "El amor es un acto de la voluntad."
-                ],
+                quotes: ["Comprender es aliviar.", "El amor es un acto de la voluntad."],
                 sections: [
-                    { title: "Introducción y Oxitocina", items: [
-                        { id: 300, title: "Introducción", start: "00:00:00", end: "00:07:34" },
-                        { id: 301, title: "1. La hormona de los abrazos", start: "00:07:34", end: "00:32:44" },
-                        { id: 302, title: "2. Los vínculos afectivos", start: "00:32:44", end: "00:44:05" },
-                        { id: 303, title: "3. La empatía una herramienta vitamina", start: "00:44:05", end: "00:53:56" },
-                        { id: 304, title: "4. Hombres y Testosterona", start: "00:53:56", end: "01:07:05" },
-                        { id: 305, title: "5. Qué sucede en las mujeres", start: "01:07:05", end: "01:24:21" },
-                        { id: 306, title: "6. Tocarse es necesario", start: "01:24:21", end: "01:33:33" },
-                        { id: 307, title: "7. La oxitocina sorprende", start: "01:33:33", end: "01:53:23" },
-                        { id: 308, title: "8. No es bueno estar solo", start: "01:53:23", end: "02:01:56" }
+                    { title: "Oxitocina", items: [
+                        { id: 300, title: "Intro", start: "00:00:00", end: "00:07:34" },
+                        { id: 301, title: "1. Hormona abrazos", start: "00:07:34", end: "00:32:44" },
+                        { id: 302, title: "2. Vínculos afectivos", start: "00:32:44", end: "00:44:05" },
+                        { id: 303, title: "3. Empatía", start: "00:44:05", end: "00:53:56" },
+                        { id: 304, title: "4. Testosterona", start: "00:53:56", end: "01:07:05" },
+                        { id: 305, title: "5. Mujeres", start: "01:07:05", end: "01:24:21" },
+                        { id: 306, title: "6. Tocarse", start: "01:24:21", end: "01:33:33" },
+                        { id: 307, title: "7. Oxitocina", start: "01:33:33", end: "01:53:23" },
+                        { id: 308, title: "8. Soledad", start: "01:53:23", end: "02:01:56" }
                     ]},
-                    { title: "El Apego", items: [
+                    { title: "Apego", items: [
                         { id: 309, title: "9. Qué es el apego", start: "02:01:56", end: "02:30:01" },
                         { id: 310, title: "10. Amamos como nos amaron", start: "02:30:01", end: "02:40:15" },
-                        { id: 311, title: "11. La confusión en la educación", start: "02:40:15", end: "03:10:09" },
-                        { id: 312, title: "12. El maltrato que más perjudica", start: "03:10:09", end: "03:54:02" },
-                        { id: 313, title: "13. Cómo sanar las heridas", start: "03:54:02", end: "04:42:57" }
+                        { id: 311, title: "11. Confusión educación", start: "02:40:15", end: "03:10:09" },
+                        { id: 312, title: "12. Maltrato", start: "03:10:09", end: "03:54:02" },
+                        { id: 313, title: "13. Sanar heridas", start: "03:54:02", end: "04:42:57" }
                     ]},
-                    { title: "Placer y Amor", items: [
+                    { title: "Placer/Amor", items: [
                         { id: 314, title: "14. El placer", start: "04:42:57", end: "05:31:17" },
                         { id: 315, title: "15. Hablemos del amor", start: "05:31:17", end: "05:51:23" },
-                        { id: 316, title: "16. Elegir bien es un éxito", start: "05:51:23", end: "06:05:51" },
-                        { id: 317, title: "17. La teoría de la pirámide", start: "06:05:51", end: "06:28:19" },
-                        { id: 318, title: "18. Mejorar el éxito en una relación", start: "06:28:19", end: "06:44:26" },
-                        { id: 319, title: "19. Personalidad altamente sensible", start: "06:44:26", end: "06:54:09" }
+                        { id: 316, title: "16. Elegir bien", start: "05:51:23", end: "06:05:51" },
+                        { id: 317, title: "17. Teoría pirámide", start: "06:05:51", end: "06:28:19" },
+                        { id: 318, title: "18. Éxito relación", start: "06:28:19", end: "06:44:26" },
+                        { id: 319, title: "19. Alta sensibilidad", start: "06:44:26", end: "06:54:09" }
                     ]},
-                    { title: "Personas Tóxicas y Vitamina", items: [
-                        { id: 320, title: "20. Qué es una persona tóxica", start: "06:54:09", end: "07:05:47" },
-                        { id: 321, title: "21. Identificar a las personas que no convienen", start: "07:05:47", end: "07:23:56" },
-                        { id: 322, title: "22. Saber gestionar a las personas tóxicas", start: "07:23:56", end: "07:58:14" },
-                        { id: 323, title: "Personas Vitamina (Conclusión)", start: "07:58:14", end: "08:08:41" }
+                    { title: "Tóxicas/Vitamina", items: [
+                        { id: 320, title: "20. Persona tóxica", start: "06:54:09", end: "07:05:47" },
+                        { id: 321, title: "21. Identificar", start: "07:05:47", end: "07:23:56" },
+                        { id: 322, title: "22. Gestionar", start: "07:23:56", end: "07:58:14" },
+                        { id: 323, title: "Personas Vitamina", start: "07:58:14", end: "08:08:41" }
                     ]}
                 ]
             }
         };
 
-        // --- Estado Global ---
+        const achievementsList = [
+            { id: "first_step", title: "Primer Paso", desc: "Completa tu primer capítulo", icon: "footprints" },
+            { id: "streak_3", title: "Constancia", desc: "Racha de 3 días seguidos", icon: "flame" },
+            { id: "streak_7", title: "Imparable", desc: "Racha de 7 días seguidos", icon: "zap" },
+            { id: "bookworm", title: "Bibliotecario", desc: "Empieza 3 libros distintos", icon: "library" },
+            { id: "marathon", title: "Maratón", desc: "Escucha 60 min en un día", icon: "timer" },
+            { id: "scholar", title: "Erudito", desc: "Alcanza 10 horas totales", icon: "graduation-cap" }
+        ];
+
+        // --- GLOBAL STATE ---
         let currentBookId = localStorage.getItem('activeBookId') || 'habitosAtomicos';
-        let completed = []; // Se cargará dinámicamente según el libro
+        let listeningHistory = JSON.parse(localStorage.getItem('listeningHistory')) || []; 
+        let chapterNotes = JSON.parse(localStorage.getItem('chapterNotes')) || {}; 
+        let dailyGoalMinutes = parseInt(localStorage.getItem('dailyGoalMinutes')) || 30;
+        let activeNoteId = null;
 
-        // --- Funciones de Tiempo ---
-        function parseTimeStr(timeStr) {
-            const parts = timeStr.split(':').map(Number);
-            if (parts.length === 3) return parts[0] * 3600 + parts[1] * 60 + parts[2];
-            if (parts.length === 2) return parts[0] * 60 + parts[1];
-            return 0;
+        // --- CORE FUNCTIONS ---
+
+        function switchView(viewName) {
+            document.getElementById('view-library').classList.add('hidden');
+            document.getElementById('view-stats').classList.add('hidden');
+            document.getElementById('tab-library').classList.remove('active');
+            document.getElementById('tab-stats').classList.remove('active');
+
+            document.getElementById(`view-${viewName}`).classList.remove('hidden');
+            document.getElementById(`tab-${viewName}`).classList.add('active');
+
+            if(viewName === 'stats') renderStats();
         }
 
-        function formatDuration(totalSeconds) {
-            const h = Math.floor(totalSeconds / 3600);
-            const m = Math.floor((totalSeconds % 3600) / 60);
-            if (h > 0) return `${h}h ${m}m`;
-            return `${m} min`;
-        }
-
-        function getItemDuration(item) {
-            return parseTimeStr(item.end) - parseTimeStr(item.start);
-        }
-
-        // --- Lógica Principal ---
         function switchBook(bookId) {
+            // Safety check: if book doesn't exist (e.g. was deleted), default to habitosAtomicos
+            if (!library[bookId]) {
+                bookId = 'habitosAtomicos';
+            }
+
             currentBookId = bookId;
             localStorage.setItem('activeBookId', bookId);
             
-            // Cargar progreso del libro específico
-            const savedProgress = localStorage.getItem(`progress_${bookId}`);
-            completed = savedProgress ? JSON.parse(savedProgress) : [];
-            
-            // Actualizar UI de Tabs
-            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-            document.getElementById(`tab-${bookId}`).classList.add('active');
+            document.querySelectorAll('.book-select-btn').forEach(btn => {
+                btn.classList.remove('bg-amber-500', 'text-white', 'dark:bg-amber-600');
+                btn.classList.add('bg-slate-200', 'dark:bg-slate-800', 'text-slate-600', 'dark:text-slate-400');
+            });
+            const activeBtn = document.getElementById(`book-btn-${bookId}`);
+            if(activeBtn) {
+                activeBtn.classList.remove('bg-slate-200', 'dark:bg-slate-800', 'text-slate-600', 'dark:text-slate-400');
+                activeBtn.classList.add('bg-amber-500', 'text-white', 'dark:bg-amber-600');
+            }
 
-            // Actualizar Info del Libro
             const book = library[bookId];
             document.getElementById('book-title-display').innerText = book.title;
             document.getElementById('book-author-display').innerText = book.author;
 
             loadRandomQuote();
-            saveAndRender();
+            renderLibraryList();
         }
 
-        function toggleComplete(id, event) {
+        function toggleComplete(sectionId, title, start, end, event) {
             if(event) event.stopPropagation();
             
-            const isCompleting = !completed.includes(id);
-            if (completed.includes(id)) {
-                completed = completed.filter(item => item !== id);
+            const duration = parseTimeStr(end) - parseTimeStr(start);
+            const now = Date.now();
+            const existingIndex = listeningHistory.findIndex(log => log.sectionId === sectionId && log.bookId === currentBookId);
+            
+            if (existingIndex > -1) {
+                listeningHistory.splice(existingIndex, 1);
             } else {
-                completed.push(id);
-            }
-            
-            // Guardar progreso específico del libro
-            localStorage.setItem(`progress_${currentBookId}`, JSON.stringify(completed));
-            
-            saveAndRender();
-            if (isCompleting) triggerConfetti();
-        }
-
-        function resetProgress() {
-            if(confirm("¿Estás seguro de reiniciar el progreso de ESTE libro?")) {
-                completed = [];
-                localStorage.setItem(`progress_${currentBookId}`, JSON.stringify(completed));
-                saveAndRender();
-            }
-        }
-
-        // --- Citas ---
-        function loadRandomQuote() {
-            const quotes = library[currentBookId].quotes;
-            const index = Math.floor(Math.random() * quotes.length);
-            document.getElementById('quote-text').innerText = `"${quotes[index]}"`;
-            document.getElementById('quote-author').innerText = `— ${library[currentBookId].author}`;
-        }
-
-        // --- Renderizado ---
-        function saveAndRender() {
-            updateProgressUI();
-            renderList();
-        }
-
-        function updateProgressUI() {
-            const sections = library[currentBookId].sections;
-            const totalItems = sections.reduce((acc, section) => acc + section.items.length, 0);
-            const percentage = totalItems === 0 ? 0 : Math.round((completed.length / totalItems) * 100);
-            
-            let listenedSeconds = 0;
-            let totalBookSeconds = 0;
-
-            sections.forEach(section => {
-                section.items.forEach(item => {
-                    const duration = getItemDuration(item);
-                    totalBookSeconds += duration;
-                    if (completed.includes(item.id)) {
-                        listenedSeconds += duration;
-                    }
+                listeningHistory.push({
+                    timestamp: now,
+                    duration: duration,
+                    bookId: currentBookId,
+                    sectionId: sectionId,
+                    title: title
                 });
-            });
+                triggerConfetti();
+            }
 
-            document.getElementById('progress-bar').style.width = `${percentage}%`;
-            document.getElementById('progress-text').innerText = `${percentage}% Completado`;
-            document.getElementById('time-text').innerText = `${formatDuration(listenedSeconds)} / ${formatDuration(totalBookSeconds)}`;
+            localStorage.setItem('listeningHistory', JSON.stringify(listeningHistory));
+            renderLibraryList();
         }
 
-        function renderList() {
+        // --- RENDER LIBRARY ---
+        function renderLibraryList() {
             const container = document.getElementById('app-container');
             container.innerHTML = '';
             
-            const sections = library[currentBookId].sections;
+            const book = library[currentBookId];
             let firstUncompletedFound = false;
+            let bookCompletedSeconds = 0;
+            let bookTotalSeconds = 0;
 
-            sections.forEach((section) => {
+            const completedIds = listeningHistory.filter(log => log.bookId === currentBookId).map(log => log.sectionId);
+
+            book.sections.forEach(section => {
                 const sectionEl = document.createElement('div');
                 sectionEl.className = 'fade-in';
                 
                 const header = document.createElement('h3');
-                header.className = 'text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3 ml-1';
+                header.className = 'text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2 ml-1';
                 header.innerText = section.title;
                 sectionEl.appendChild(header);
 
                 const listContainer = document.createElement('div');
-                listContainer.className = 'bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden transition-colors duration-300';
+                listContainer.className = 'bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden';
 
                 section.items.forEach(item => {
-                    const isCompleted = completed.includes(item.id);
-                    const durationStr = formatDuration(getItemDuration(item));
-                    const startSeconds = parseTimeStr(item.start);
-                    const endSeconds = parseTimeStr(item.end);
-                    // Lógica para video personalizado (Multi-video support)
+                    const isCompleted = completedIds.includes(item.id);
+                    const duration = parseTimeStr(item.end) - parseTimeStr(item.start);
+                    bookTotalSeconds += duration;
+                    if(isCompleted) bookCompletedSeconds += duration;
+
                     const videoIdParam = item.videoId ? `'${item.videoId}'` : 'null';
+                    const durationStr = formatDuration(duration);
+                    
+                    // Note State
+                    const noteKey = `${currentBookId}_${item.id}`;
+                    const hasNote = chapterNotes[noteKey] && chapterNotes[noteKey].trim().length > 0;
 
                     let isNextUp = false;
                     if (!isCompleted && !firstUncompletedFound) {
@@ -480,132 +585,417 @@
                     }
 
                     const itemEl = document.createElement('div');
-                    itemEl.className = `item-row group flex items-center justify-between p-4 border-b border-slate-100 dark:border-slate-800 last:border-0 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors 
+                    itemEl.className = `item-row group flex items-center justify-between p-3 border-b border-slate-100 dark:border-slate-800 last:border-0 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors 
                         ${isCompleted ? 'bg-slate-50 dark:bg-slate-950/50' : ''} 
                         ${isNextUp ? 'next-up' : ''}`;
                     
                     itemEl.innerHTML = `
-                        <div class="flex items-center gap-4 flex-1 cursor-pointer" onclick="toggleComplete(${item.id}, event)">
+                        <div class="flex items-center gap-3 flex-1 cursor-pointer" onclick="toggleComplete(${item.id}, '${item.title}', '${item.start}', '${item.end}', event)">
                             <button class="check-btn flex-shrink-0 transition-all duration-200 text-slate-300 dark:text-slate-600 hover:text-slate-400 dark:hover:text-slate-500 ${isCompleted ? 'completed' : ''}">
-                                <i data-lucide="circle" class="w-6 h-6 icon-circle"></i>
-                                <i data-lucide="check-circle" class="w-6 h-6 icon-check"></i>
+                                <i data-lucide="circle" class="w-5 h-5 icon-circle"></i>
+                                <i data-lucide="check-circle" class="w-5 h-5 icon-check"></i>
                             </button>
                             
                             <div class="flex-1">
-                                <div class="flex items-center gap-2 mb-1">
-                                    <span class="next-badge text-[10px] font-bold uppercase tracking-wide text-amber-600 dark:text-amber-300 bg-amber-100 dark:bg-amber-900/40 px-1.5 py-0.5 rounded">Siguiente</span>
-                                    <p class="font-medium text-base transition-colors leading-tight ${isCompleted ? 'text-slate-400 dark:text-slate-600 line-through decoration-slate-300 dark:decoration-slate-700' : 'text-slate-800 dark:text-slate-200'}">
+                                <div class="flex items-center gap-2 mb-0.5">
+                                    <span class="next-badge text-[9px] font-bold uppercase tracking-wide text-amber-600 dark:text-amber-300 bg-amber-100 dark:bg-amber-900/40 px-1.5 py-0.5 rounded">Siguiente</span>
+                                    <p class="text-sm font-medium transition-colors leading-tight ${isCompleted ? 'text-slate-400 dark:text-slate-600 line-through decoration-slate-300 dark:decoration-slate-700' : 'text-slate-800 dark:text-slate-200'}">
                                         ${item.title}
                                     </p>
                                 </div>
-                                <div class="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1 text-xs font-mono text-slate-500 dark:text-slate-500">
-                                    <span class="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded">
+                                <div class="flex items-center gap-3 text-[10px] font-mono text-slate-400 dark:text-slate-500">
+                                    <span class="flex items-center gap-1">
                                         <i data-lucide="clock" class="w-3 h-3"></i> ${durationStr}
                                     </span>
-                                    <span>${item.start} - ${item.end}</span>
+                                    ${hasNote ? `<span class="flex items-center gap-1 text-amber-500"><i data-lucide="sticky-note" class="w-3 h-3"></i> Nota guardada</span>` : ''}
                                 </div>
                             </div>
                         </div>
 
-                        <button onclick="openVideo('${item.start}', '${item.end}', ${videoIdParam}); event.stopPropagation();" 
-                                class="ml-4 p-2 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 rounded-full hover:bg-amber-500 dark:hover:bg-amber-600 hover:text-white transition-all shadow-sm group-hover:shadow-md flex items-center gap-2"
-                                title="Ver en YouTube">
-                            <i data-lucide="play" class="w-4 h-4 fill-current"></i>
-                            <span class="text-xs font-bold hidden sm:inline">Ver</span>
-                        </button>
+                        <div class="flex items-center gap-1">
+                            <button onclick="openNotes(${item.id}, '${item.title}'); event.stopPropagation();" 
+                                    class="p-2 text-slate-400 hover:text-amber-500 dark:hover:text-amber-400 transition-colors rounded-full hover:bg-slate-100 dark:hover:bg-slate-800"
+                                    title="Añadir nota">
+                                <i data-lucide="pen-tool" class="w-4 h-4"></i>
+                            </button>
+                            <button onclick="openVideo('${item.start}', '${item.end}', ${videoIdParam}); event.stopPropagation();" 
+                                    class="p-2 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 rounded-full hover:bg-amber-500 hover:text-white dark:hover:bg-amber-600 transition-all shadow-sm flex items-center justify-center w-8 h-8 ml-1"
+                                    title="Ver en YouTube">
+                                <i data-lucide="play" class="w-3 h-3 fill-current ml-0.5"></i>
+                            </button>
+                        </div>
                     `;
                     listContainer.appendChild(itemEl);
                 });
-
                 sectionEl.appendChild(listContainer);
                 container.appendChild(sectionEl);
             });
+
+            const percentage = bookTotalSeconds > 0 ? Math.round((bookCompletedSeconds / bookTotalSeconds) * 100) : 0;
+            document.getElementById('book-progress-text').innerText = `${percentage}%`;
+            document.getElementById('book-time-text').innerText = `${formatDuration(bookCompletedSeconds)} / ${formatDuration(bookTotalSeconds)}`;
             
             lucide.createIcons();
         }
 
-        // --- Video Modal ---
-        function openVideo(startStr, endStr, customVideoId) {
-            const startSeconds = parseTimeStr(startStr);
-            const endSeconds = parseTimeStr(endStr);
+        // --- STATS ENGINE ---
+        function renderStats() {
+            const now = new Date();
+            const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+            const weekStart = todayStart - (6 * 24 * 60 * 60 * 1000);
+
+            // Analysis Vars
+            let todaySeconds = 0;
+            let weekSeconds = 0;
+            let totalSeconds = 0;
+            const activityMap = {}; 
+            const booksTime = {}; // For Pie Chart
+
+            // 1. Process History
+            listeningHistory.forEach(log => {
+                const dur = log.duration || 0;
+                totalSeconds += dur;
+                
+                // Book breakdown
+                if(!booksTime[log.bookId]) booksTime[log.bookId] = 0;
+                booksTime[log.bookId] += dur;
+
+                // Date breakdown
+                const logDate = new Date(log.timestamp);
+                const dateKey = logDate.toISOString().split('T')[0];
+                if(!activityMap[dateKey]) activityMap[dateKey] = 0;
+                activityMap[dateKey] += dur;
+
+                if(log.timestamp >= todayStart) todaySeconds += dur;
+                if(log.timestamp >= weekStart) weekSeconds += dur;
+            });
+
+            // 2. Metrics
+            document.getElementById('stat-today').innerText = todaySeconds < 60 ? (todaySeconds + 's') : formatDuration(todaySeconds);
+            document.getElementById('stat-chapters').innerText = listeningHistory.length;
             
-            // Usar video ID personalizado si existe, si no, el del libro global
-            const videoId = customVideoId || library[currentBookId].videoId;
-            
-            const modal = document.getElementById('video-modal');
-            const iframe = document.getElementById('youtube-iframe');
-            
-            const embedUrl = `https://www.youtube.com/embed/${videoId}?start=${startSeconds}&end=${endSeconds}&autoplay=1&rel=0`;
-            
-            iframe.src = embedUrl;
-            modal.classList.remove('hidden');
-            document.body.style.overflow = 'hidden';
-        }
+            // Level
+            const totalHours = totalSeconds / 3600;
+            let level = "Novato";
+            if (totalHours > 2) level = "Aprendiz";
+            if (totalHours > 10) level = "Lector";
+            if (totalHours > 50) level = "Erudito";
+            if (totalHours > 100) level = "Sabio";
+            document.getElementById('stat-level').innerText = level;
 
-        function closeVideo() {
-            const modal = document.getElementById('video-modal');
-            const iframe = document.getElementById('youtube-iframe');
-            iframe.src = "";
-            modal.classList.add('hidden');
-            document.body.style.overflow = 'auto';
-        }
-
-        // Event Listeners
-        document.addEventListener('keydown', (e) => { if (e.key === "Escape") closeVideo(); });
-        document.getElementById('video-modal').addEventListener('click', (e) => { if (e.target.id === 'video-modal') closeVideo(); });
-
-        // --- Utils ---
-        function initDarkMode() {
-            const isDark = localStorage.getItem('theme') === 'dark' || 
-                          (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches);
-            updateTheme(isDark);
-        }
-
-        function toggleDarkMode() {
-            const html = document.documentElement;
-            const isDark = html.classList.contains('dark');
-            updateTheme(!isDark);
-        }
-
-        function updateTheme(isDark) {
-            const html = document.documentElement;
-            if (isDark) {
-                html.classList.add('dark');
-                localStorage.setItem('theme', 'dark');
+            // Streak
+            let streak = 0;
+            const todayKey = now.toISOString().split('T')[0];
+            let checkDate = new Date(now);
+            if(activityMap[todayKey] > 0) {
+                streak = 1;
+                checkDate.setDate(checkDate.getDate() - 1);
             } else {
-                html.classList.remove('dark');
-                localStorage.setItem('theme', 'light');
+                checkDate.setDate(checkDate.getDate() - 1);
             }
-        }
-
-        function triggerConfetti() {
-            var count = 200;
-            var defaults = { origin: { y: 0.7 } };
-            function fire(particleRatio, opts) {
-                confetti(Object.assign({}, defaults, opts, {
-                    particleCount: Math.floor(count * particleRatio)
-                }));
+            while(true) {
+                const dKey = checkDate.toISOString().split('T')[0];
+                if(activityMap[dKey] > 0) {
+                    // Avoid double counting today if already counted
+                    if(dKey !== todayKey || streak === 0) streak++;
+                    checkDate.setDate(checkDate.getDate() - 1);
+                } else {
+                    break;
+                }
             }
-            fire(0.25, { spread: 26, startVelocity: 55 });
-            fire(0.2, { spread: 60 });
-            fire(0.35, { spread: 100, decay: 0.91, scalar: 0.8 });
-            fire(0.1, { spread: 120, startVelocity: 25, decay: 0.92, scalar: 1.2 });
-            fire(0.1, { spread: 120, startVelocity: 45 });
-        }
+            document.getElementById('stat-streak').innerText = streak + (streak === 1 ? " día" : " días");
 
-        // Init
-        document.addEventListener('DOMContentLoaded', () => {
-            initDarkMode();
+            // 3. Daily Goal Ring
+            const dailyGoalSeconds = dailyGoalMinutes * 60;
+            const dailyPct = Math.min(100, Math.round((todaySeconds / dailyGoalSeconds) * 100));
+            // Circumference of radius 56 is approx 351.86
+            const offset = 351.86 - (351.86 * dailyPct) / 100;
+            document.getElementById('daily-progress-ring').style.strokeDashoffset = offset;
+            document.getElementById('daily-progress-val').innerText = `${dailyPct}%`;
+            document.getElementById('daily-goal-target').innerText = `${dailyGoalMinutes}m`;
+
+            // 4. Pie Chart (Distribution)
+            if(totalSeconds > 0) {
+                let currentDeg = 0;
+                let gradientStr = "";
+                const legendContainer = document.getElementById('distribution-legend');
+                legendContainer.innerHTML = '';
+
+                Object.keys(booksTime).forEach((bId, idx, arr) => {
+                    // Only process books that currently exist in the library
+                    if (!library[bId]) return;
+
+                    const pct = (booksTime[bId] / totalSeconds) * 100;
+                    const deg = (pct / 100) * 360;
+                    const color = library[bId].color;
+                    
+                    gradientStr += `${color} ${currentDeg}deg ${currentDeg + deg}deg${idx < arr.length - 1 ? ', ' : ''}`;
+                    currentDeg += deg;
+
+                    // Legend Item
+                    if(pct > 1) { // Only show significant items
+                        legendContainer.innerHTML += `
+                            <div class="flex items-center gap-2">
+                                <span class="w-2 h-2 rounded-full" style="background-color: ${color}"></span>
+                                <span>${library[bId].title.substring(0, 15)}... (${Math.round(pct)}%)</span>
+                            </div>
+                        `;
+                    }
+                });
+                
+                // Fix for trailing comma or if single item
+                if (gradientStr.endsWith(', ')) gradientStr = gradientStr.slice(0, -2);
+                if (gradientStr === "") gradientStr = "#cbd5e1 0deg 360deg"; // Fallback grey
+
+                document.getElementById('distribution-pie').style.background = `conic-gradient(${gradientStr})`;
+            }
+
+            // 5. Weekly Chart
+            const chartContainer = document.getElementById('weekly-chart');
+            chartContainer.innerHTML = '';
+            const days = [];
+            for(let i=6; i>=0; i--) {
+                const d = new Date();
+                d.setDate(d.getDate() - i);
+                const dKey = d.toISOString().split('T')[0];
+                const dayName = d.toLocaleDateString('es-ES', { weekday: 'short' }).slice(0,3);
+                days.push({ key: dKey, label: dayName, value: activityMap[dKey] || 0 });
+            }
+            const maxVal = Math.max(...days.map(d => d.value), 60);
+            days.forEach(day => {
+                const heightPct = (day.value / maxVal) * 100;
+                const barColorClass = day.value > 0 ? 'bg-amber-400 dark:bg-amber-600' : 'bg-slate-200 dark:bg-slate-800';
+                chartContainer.innerHTML += `
+                    <div class="flex flex-col items-center gap-2 flex-1 h-full justify-end">
+                        <div class="w-full max-w-[30px] rounded-t-sm chart-bar ${barColorClass}" style="height: ${heightPct}%"></div>
+                        <span class="text-[10px] text-slate-400 uppercase">${day.label}</span>
+                    </div>
+                `;
+            });
+
+            // 6. Achievements
+            const achContainer = document.getElementById('achievements-container');
+            achContainer.innerHTML = '';
             
-            // Migrar datos antiguos si existen
-            const oldData = localStorage.getItem('atomicHabitsProgressHTML');
-            if (oldData && !localStorage.getItem('progress_habitosAtomicos')) {
-                localStorage.setItem('progress_habitosAtomicos', oldData);
+            // Logic Check
+            const uniqueBooks = new Set(listeningHistory.map(l => l.bookId)).size;
+            
+            const unlocked = [];
+            if(listeningHistory.length > 0) unlocked.push("first_step");
+            if(streak >= 3) unlocked.push("streak_3");
+            if(streak >= 7) unlocked.push("streak_7");
+            if(uniqueBooks >= 3) unlocked.push("bookworm");
+            if(Object.values(activityMap).some(v => v >= 3600)) unlocked.push("marathon");
+            if(totalHours >= 10) unlocked.push("scholar");
+
+            achievementsList.forEach(ach => {
+                const isUnlocked = unlocked.includes(ach.id);
+                achContainer.innerHTML += `
+                    <div class="flex flex-col items-center text-center p-3 rounded-lg border ${isUnlocked ? 'bg-amber-50 dark:bg-slate-800 border-amber-200 dark:border-slate-700' : 'bg-slate-50 dark:bg-slate-900 border-slate-100 dark:border-slate-800 opacity-50 grayscale'}">
+                        <div class="p-2 rounded-full ${isUnlocked ? 'bg-white dark:bg-slate-700 text-amber-500 shadow-sm' : 'bg-slate-200 dark:bg-slate-800 text-slate-400'} mb-2">
+                            <i data-lucide="${ach.icon}" class="w-5 h-5"></i>
+                        </div>
+                        <span class="text-xs font-bold text-slate-700 dark:text-slate-300 leading-tight">${ach.title}</span>
+                        <span class="text-[10px] text-slate-400 mt-1 leading-tight">${ach.desc}</span>
+                    </div>
+                `;
+            });
+            lucide.createIcons();
+        }
+
+        // --- FEATURES ---
+
+        function adjustDailyGoal(amount) {
+            dailyGoalMinutes += amount;
+            if(dailyGoalMinutes < 5) dailyGoalMinutes = 5;
+            localStorage.setItem('dailyGoalMinutes', dailyGoalMinutes);
+            renderStats();
+        }
+
+        // Notes System
+        function openNotes(chapterId, chapterTitle) {
+            activeNoteId = `${currentBookId}_${chapterId}`;
+            document.getElementById('note-chapter-title').innerText = chapterTitle;
+            document.getElementById('note-textarea').value = chapterNotes[activeNoteId] || "";
+            document.getElementById('notes-modal').classList.remove('hidden');
+        }
+
+        function saveNote() {
+            const text = document.getElementById('note-textarea').value;
+            if(text.trim()) {
+                chapterNotes[activeNoteId] = text;
+            } else {
+                delete chapterNotes[activeNoteId];
+            }
+            localStorage.setItem('chapterNotes', JSON.stringify(chapterNotes));
+            closeNotes();
+            renderLibraryList(); // Refresh indicators
+        }
+
+        function closeNotes() {
+            document.getElementById('notes-modal').classList.add('hidden');
+            activeNoteId = null;
+        }
+
+        function exportData() {
+            const data = {
+                history: listeningHistory,
+                notes: chapterNotes,
+                goal: dailyGoalMinutes,
+                theme: localStorage.getItem('theme'),
+                exportDate: new Date().toISOString()
+            };
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data));
+            const downloadAnchorNode = document.createElement('a');
+            downloadAnchorNode.setAttribute("href", dataStr);
+            downloadAnchorNode.setAttribute("download", "audiolibros_backup.json");
+            document.body.appendChild(downloadAnchorNode);
+            downloadAnchorNode.click();
+            downloadAnchorNode.remove();
+        }
+
+        function triggerImport() {
+            document.getElementById('import-file').click();
+        }
+
+        function handleFileImport(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const importedData = JSON.parse(e.target.result);
+                    
+                    // Basic Validation
+                    if (!importedData.history && !importedData.notes) {
+                        alert("El archivo no parece ser una copia de seguridad válida.");
+                        return;
+                    }
+
+                    // --- MERGE LOGIC ---
+                    
+                    // 1. History Merge (Prevent Duplicates based on bookId + sectionId)
+                    let addedCount = 0;
+                    const currentKeys = new Set(listeningHistory.map(h => `${h.bookId}_${h.sectionId}`));
+                    
+                    if (importedData.history) {
+                        importedData.history.forEach(item => {
+                            const key = `${item.bookId}_${item.sectionId}`;
+                            if (!currentKeys.has(key)) {
+                                listeningHistory.push(item);
+                                currentKeys.add(key);
+                                addedCount++;
+                            }
+                        });
+                    }
+
+                    // 2. Notes Merge (Conflict Resolution: Append)
+                    let notesCount = 0;
+                    if (importedData.notes) {
+                        Object.keys(importedData.notes).forEach(key => {
+                            if (chapterNotes[key]) {
+                                // If note exists and is different, append
+                                if (chapterNotes[key] !== importedData.notes[key]) {
+                                    chapterNotes[key] += `\n\n[Importado]: ${importedData.notes[key]}`;
+                                    notesCount++;
+                                }
+                            } else {
+                                chapterNotes[key] = importedData.notes[key];
+                                notesCount++;
+                            }
+                        });
+                    }
+
+                    // 3. Settings Restore (Only if current is default)
+                    if (dailyGoalMinutes === 30 && importedData.goal && importedData.goal !== 30) {
+                        dailyGoalMinutes = importedData.goal;
+                    }
+
+                    // Save Everything
+                    localStorage.setItem('listeningHistory', JSON.stringify(listeningHistory));
+                    localStorage.setItem('chapterNotes', JSON.stringify(chapterNotes));
+                    localStorage.setItem('dailyGoalMinutes', dailyGoalMinutes);
+
+                    // Refresh UI
+                    renderStats();
+                    renderLibraryList();
+                    
+                    alert(`Importación exitosa:\n- ${addedCount} capítulos recuperados\n- ${notesCount} notas actualizadas`);
+                    triggerConfetti();
+
+                } catch (err) {
+                    console.error(err);
+                    alert("Error al leer el archivo. Asegúrate de que sea un JSON válido.");
+                }
+                // Reset input
+                event.target.value = '';
+            };
+            reader.readAsText(file);
+        }
+
+        // --- HELPERS ---
+        function parseTimeStr(timeStr) {
+            const parts = timeStr.split(':').map(Number);
+            if (parts.length === 3) return parts[0] * 3600 + parts[1] * 60 + parts[2];
+            if (parts.length === 2) return parts[0] * 60 + parts[1];
+            return 0;
+        }
+        function formatDuration(totalSeconds) {
+            const h = Math.floor(totalSeconds / 3600);
+            const m = Math.floor((totalSeconds % 3600) / 60);
+            return h > 0 ? `${h}h ${m}m` : `${m} min`;
+        }
+        function loadRandomQuote() {
+            const quotes = library[currentBookId].quotes;
+            const index = Math.floor(Math.random() * quotes.length);
+            document.getElementById('quote-text').innerText = `"${quotes[index]}"`;
+            document.getElementById('quote-author').innerText = `— ${library[currentBookId].author}`;
+        }
+        function resetCurrentBook() {
+             if(confirm("¿Estás seguro? Se borrará el progreso de ESTE libro.")) {
+                listeningHistory = listeningHistory.filter(log => log.bookId !== currentBookId);
+                localStorage.setItem('listeningHistory', JSON.stringify(listeningHistory));
+                renderLibraryList();
+            }
+        }
+        function toggleDarkMode() {
+            document.documentElement.classList.toggle('dark');
+            localStorage.setItem('theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light');
+        }
+        function triggerConfetti() {
+            confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+        }
+        function openVideo(start, end, videoId) {
+            const s = parseTimeStr(start);
+            const e = parseTimeStr(end);
+            const v = videoId || library[currentBookId].videoId;
+            const url = `https://www.youtube.com/embed/${v}?start=${s}&end=${e}&autoplay=1&rel=0`;
+            document.getElementById('youtube-iframe').src = url;
+            document.getElementById('video-modal').classList.remove('hidden');
+        }
+        function closeVideo() {
+            document.getElementById('youtube-iframe').src = "";
+            document.getElementById('video-modal').classList.add('hidden');
+        }
+        function showStats() {
+            switchView('stats');
+        }
+
+        // INIT
+        document.addEventListener('DOMContentLoaded', () => {
+            if(localStorage.getItem('theme') === 'dark') document.documentElement.classList.add('dark');
+            
+            // Validate if stored book ID still exists
+            const storedBookId = localStorage.getItem('activeBookId');
+            if (storedBookId && !library[storedBookId]) {
+                // If stored ID is invalid (e.g. club5am), reset to default
+                currentBookId = 'habitosAtomicos';
+                localStorage.setItem('activeBookId', currentBookId);
             }
 
             switchBook(currentBookId);
         });
-
     </script>
 </body>
 </html>
