@@ -153,15 +153,15 @@
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 text-slate-600 dark:text-slate-400">
                     <div class="p-3 bg-blue-50/50 dark:bg-slate-850 rounded-lg border border-blue-100 dark:border-slate-800">
                         <p class="text-[10px] font-black text-blue-700 dark:text-blue-400 uppercase mb-1">1. Intención clara</p>
-                        <p class="text-[11px] leading-snug">Escribe: "Yo haré <strong>[Hábito]</strong> a las <strong>[Hora]</strong> en <strong>[Lugar]</strong>". Elimina la ambigüedad.</p>
+                        <p class="text-[11px] leading-snug">Define: "Yo haré <strong>[conducta]</strong> a las <strong>[hora]</strong> en <strong>[lugar]</strong>". Convierte ideas en citas fijas con tu destino.</p>
                     </div>
                     <div class="p-3 bg-green-50/50 dark:bg-slate-850 rounded-lg border border-green-100 dark:border-slate-800">
-                        <p class="text-[10px] font-black text-green-700 dark:text-green-400 uppercase mb-1">2. La Regla de Oro</p>
-                        <p class="text-[11px] leading-snug">Si es un hábito nuevo, debe tomar menos de <strong>2 minutos</strong>. Domina el arte de aparecer.</p>
+                        <p class="text-[10px] font-black text-green-700 dark:text-green-400 uppercase mb-1">2. Pasos Atómicos</p>
+                        <p class="text-[11px] leading-snug">Aplica la <strong>Regla de los 2 Minutos</strong>. Un hábito debe ser tan fácil de empezar que no puedas decir que no.</p>
                     </div>
                     <div class="p-3 bg-purple-50/50 dark:bg-slate-850 rounded-lg border border-purple-100 dark:border-slate-800">
-                        <p class="text-[10px] font-black text-purple-700 dark:text-purple-400 uppercase mb-1">3. Entorno Visual</p>
-                        <p class="text-[11px] leading-snug">Hazlo <strong>obvio</strong>. Coloca el disparador del hábito en tu línea de visión directa.</p>
+                        <p class="text-[10px] font-black text-purple-700 dark:text-purple-400 uppercase mb-1">3. Control Ambiental</p>
+                        <p class="text-[11px] leading-snug">Optimiza tu entorno. Haz que las señales de los buenos hábitos sean <strong>obvias</strong> y las malas invisibles.</p>
                     </div>
                 </div>
 
@@ -249,7 +249,7 @@
             <div class="flex items-center justify-between p-3 bg-slate-900 text-white border-b border-slate-800">
                 <div class="flex items-center gap-3">
                     <span class="text-sm font-medium flex items-center gap-2"><i data-lucide="youtube" class="w-4 h-4 text-red-500"></i> Reproduciendo</span>
-                    <div class="px-2 py-0.5 bg-amber-500 rounded text-[10px] font-black flex items-center gap-1 shadow-sm">
+                    <div class="px-2 py-0.5 bg-amber-500 rounded text-[10px] font-black flex items-center gap-1 shadow-sm text-slate-900">
                         <i data-lucide="clock" class="w-3 h-3"></i> Restan: <span id="playback-countdown">00:00</span>
                     </div>
                 </div>
@@ -270,89 +270,105 @@
     <script>
         const library = {
             habitosAtomicos: { title: "Hábitos Atómicos", author: "James Clear", color: "#ef4444", videoId: "CgGiyfv7Xpc", quotes: ["No te elevas al nivel de tus metas. Caes al nivel de tus sistemas.", "Los hábitos son el interés compuesto de la superación personal."], sections: [
-                { title: "Principios Fundamentales", items: [
+                { title: "Fundamentos", items: [
                     { id: 0, title: "Introducción: Mi historia", start: "00:00:00", end: "00:26:50" },
-                    { id: 1, title: "1. El Sorprendente Poder de los Hábitos Atómicos", start: "00:27:05", end: "01:05:30" },
-                    { id: 2, title: "2. Cómo tus hábitos moldean tu identidad", start: "01:05:30", end: "01:36:11" },
-                    { id: 3, title: "3. Cómo construir mejores hábitos en 4 pasos", start: "01:36:11", end: "02:07:09" }
+                    { id: 1, title: "Capítulo 1: El sorprendente poder de los hábitos atómicos", start: "00:27:05", end: "01:05:30" },
+                    { id: 2, title: "Capítulo 2: La manera en que tus hábitos moldean tu identidad", start: "01:05:30", end: "01:36:11" },
+                    { id: 3, title: "Capítulo 3: Cómo construir mejores hábitos en 4 pasos", start: "01:36:11", end: "02:07:09" }
                 ]},
-                { title: "Las 4 Leyes", items: [
-                    { id: 4, title: "4. El hombre que no se veía bien (1ª Ley)", start: "02:07:09", end: "02:26:54" },
-                    { id: 5, title: "5. La mejor manera de comenzar un hábito", start: "02:26:54", end: "02:50:02" },
-                    { id: 6, title: "6. La motivación está sobrevalorada", start: "02:50:02", end: "03:12:44" },
-                    { id: 7, title: "7. El secreto del autocontrol", start: "03:12:44", end: "03:23:53" },
-                    { id: 8, title: "8. Cómo lograr que un hábito sea irresistible (2ª Ley)", start: "03:24:07", end: "03:49:54" },
-                    { id: 9, title: "9. El papel de la familia y los amigos", start: "03:49:54", end: "04:14:32" },
-                    { id: 10, title: "10. Cómo localizar y arreglar causas de malos hábitos", start: "04:14:32", end: "04:36:52" },
-                    { id: 11, title: "11. Avanza despacio, pero no des marcha atrás (3ª Ley)", start: "04:37:06", end: "04:49:33" },
-                    { id: 12, title: "12. La ley del menor esfuerzo", start: "04:49:33", end: "05:13:20" },
-                    { id: 13, title: "13. Cómo dejar de postergar (Regla 2 minutos)", start: "05:13:20", end: "05:30:02" },
-                    { id: 14, title: "14. Cómo hacer inevitables los buenos hábitos", start: "05:30:02", end: "05:47:05" },
-                    { id: 15, title: "15. La regla cardinal del cambio de conducta (4ª Ley)", start: "05:47:18", end: "06:14:37" },
-                    { id: 16, title: "16. Cómo mantener los buenos hábitos todos los días", start: "06:14:37", end: "06:39:28" },
-                    { id: 17, title: "17. Cómo un socio corresponsable cambia todo", start: "06:39:28", end: "06:54:29" }
+                { title: "1ª Ley: Hacerlo Obvio", items: [
+                    { id: 4, title: "Capítulo 4: El hombre que no se veía bien", start: "02:07:09", end: "02:26:54" },
+                    { id: 5, title: "Capítulo 5: La mejor manera de comenzar un nuevo hábito", start: "02:26:54", end: "02:50:02" },
+                    { id: 6, title: "Capítulo 6: La motivación está sobrevalorada", start: "02:50:02", end: "03:12:44" },
+                    { id: 7, title: "Capítulo 7: El secreto del autocontrol", start: "03:12:44", end: "03:23:53" }
+                ]},
+                { title: "2ª Ley: Hacerlo Atractivo", items: [
+                    { id: 8, title: "Capítulo 8: Cómo lograr que un hábito sea irresistible", start: "03:24:07", end: "03:49:54" },
+                    { id: 9, title: "Capítulo 9: El papel de la familia y los amigos", start: "03:49:54", end: "04:14:32" },
+                    { id: 10, title: "Capítulo 10: Cómo localizar y arreglar causas de malos hábitos", start: "04:14:32", end: "04:36:52" }
+                ]},
+                { title: "3ª Ley: Hacerlo Sencillo", items: [
+                    { id: 11, title: "Capítulo 11: Avanza despacio, pero no des marcha atrás", start: "04:37:06", end: "04:49:33" },
+                    { id: 12, title: "Capítulo 12: La ley del menor esfuerzo", start: "04:49:33", end: "05:13:20" },
+                    { id: 13, title: "Capítulo 13: Cómo dejar de postergar (Regla de 2 minutos)", start: "05:13:20", end: "05:30:02" },
+                    { id: 14, title: "Capítulo 14: Cómo hacer inevitables los buenos hábitos", start: "05:30:02", end: "05:47:05" }
+                ]},
+                { title: "4ª Ley: Hacerlo Satisfactorio", items: [
+                    { id: 15, title: "Capítulo 15: La regla cardinal del cambio de conducta", start: "05:47:18", end: "06:14:37" },
+                    { id: 16, title: "Capítulo 16: Cómo mantener los buenos hábitos todos los días", start: "06:14:37", end: "06:39:28" },
+                    { id: 17, title: "Capítulo 17: Cómo un socio corresponsable cambia todo", start: "06:39:28", end: "06:54:29" }
                 ]},
                 { title: "Tácticas Avanzadas", items: [
-                    { id: 18, title: "18. La verdad acerca del talento", start: "06:54:43", end: "07:23:04" },
-                    { id: 19, title: "19. La regla de Ricitos de Oro", start: "07:23:04", end: "07:41:26" },
-                    { id: 20, title: "20. Inconveniente de crear buenos hábitos", start: "07:41:26", end: "08:06:22" },
-                    { id: 21, title: "Conclusión: El secreto para resultados que duren", start: "08:06:22", end: "08:11:42" }
+                    { id: 18, title: "Capítulo 18: La verdad acerca del talento", start: "06:54:43", end: "07:23:04" },
+                    { id: 19, title: "Capítulo 19: La regla de Ricitos de Oro", start: "07:23:04", end: "07:41:26" },
+                    { id: 20, title: "Capítulo 20: El inconveniente de crear buenos hábitos", start: "07:41:26", end: "08:06:22" },
+                    { id: 21, title: "Conclusión", start: "08:06:22", end: "08:11:42" }
                 ]}
             ]},
             cosasBuenas: { title: "Cosas Buenas", author: "Marian Rojas Estapé", color: "#3b82f6", videoId: "UiedpTbutXg", quotes: ["La felicidad no se define, se experimenta.", "Comprender es aliviar."], sections: [
-                { title: "Mente y Hormonas", items: [
+                { title: "Sección 1: Fundamentos", items: [
                     { id: 100, title: "Introducción", start: "00:00:00", end: "00:11:59" },
-                    { id: 101, title: "1. El cerebro humano y sistemas operativos", start: "00:11:59", end: "00:50:19" },
-                    { id: 102, title: "2. El antídoto al sufrimiento: el amor", start: "00:50:19", end: "01:44:16" },
-                    { id: 103, title: "3. El Cortisol: Tu aliado y tu enemigo", start: "01:44:16", end: "02:24:57" }
+                    { id: 101, title: "Capítulo 1: El cerebro humano y sistemas operativos", start: "00:11:59", end: "00:50:19" },
+                    { id: 102, title: "Capítulo 2: El antídoto al sufrimiento: el amor", start: "00:50:19", end: "01:44:16" },
+                    { id: 103, title: "Capítulo 3: El cortisol", start: "01:44:16", end: "02:24:57" }
                 ]},
-                { title: "Gestión Emocional", items: [
-                    { id: 104, title: "4. Ni lo que pasó ni lo que vendrá", start: "02:24:57", end: "03:35:49" },
-                    { id: 105, title: "5. Vivir el momento presente", start: "03:35:49", end: "04:40:38" },
-                    { id: 106, title: "6. Las emociones y su repercusión en la salud", start: "04:40:38", end: "05:37:21" }
+                { title: "Sección 2: Bienestar", items: [
+                    { id: 104, title: "Capítulo 4: Ni lo que pasó ni lo que vendrá", start: "02:24:57", end: "03:35:49" },
+                    { id: 105, title: "Capítulo 5: Vivir el momento presente", start: "03:35:49", end: "04:40:38" },
+                    { id: 106, title: "Capítulo 6: Las emociones y su repercusión", start: "04:40:38", end: "05:37:21" }
                 ]},
-                { title: "Plan de Acción", items: [
-                    { id: 107, title: "7. ¿Qué cosas o actitudes elevan el cortisol?", start: "05:37:21", end: "06:36:28" },
-                    { id: 108, title: "8. ¿Cómo bajar el cortisol?", start: "06:36:28", end: "07:11:47" },
-                    { id: 109, title: "9. Tu mejor versión", start: "07:11:47", end: "07:34:53" }
+                { title: "Sección 3: Soluciones", items: [
+                    { id: 107, title: "Capítulo 7: ¿Qué cosas elevan el cortisol?", start: "05:37:21", end: "06:36:28" },
+                    { id: 108, title: "Capítulo 8: ¿Cómo bajar el cortisol?", start: "06:36:28", end: "07:11:47" },
+                    { id: 109, title: "Capítulo 9: Tu mejor versión", start: "07:11:47", end: "07:34:53" }
                 ]}
             ]},
             sieteHabitos: { title: "7 Hábitos", author: "Stephen Covey", color: "#10b981", videoId: "SXaY1Bz8Ndk", quotes: ["La victoria privada precede a la victoria pública.", "Busca primero entender."], sections: [
-                { title: "Parte 1: Victoria Privada", items: [
-                    { id: 200, title: "Paradigmas y Principios", start: "00:00:22", end: "00:23:24" },
+                { title: "Victoria Privada", items: [
+                    { id: 200, title: "Introducción: Paradigmas y Principios", start: "00:00:22", end: "00:23:24" },
                     { id: 201, title: "Panorama General de los 7 Hábitos", start: "00:23:24", end: "00:36:25" },
+                    { id: 202, title: "Principios de Efectividad", start: "00:36:25", end: "01:14:16" },
+                    { id: 203, title: "Efectividad y Balance P/CP", start: "01:14:16", end: "01:26:57" },
                     { id: 204, title: "La Cuenta Bancaria Emocional", start: "01:26:57", end: "01:42:48" },
-                    { id: 205, title: "H1: Ser Proactivo", start: "01:42:48", end: "02:10:10" },
-                    { id: 207, title: "H2: Comenzar con un Fin en Mente", start: "02:38:33", end: "03:22:04" },
-                    { id: 208, title: "H3: Poner Primero lo Primero", start: "03:22:04", end: "04:01:39" }
+                    { id: 205, title: "Hábito 1: Ser Proactivo", start: "01:42:48", end: "02:10:10" },
+                    { id: 206, title: "Círculo de Influencia vs Preocupación", start: "02:10:10", end: "02:38:33" },
+                    { id: 207, title: "Hábito 2: Comenzar con un Fin en Mente", start: "02:38:33", end: "03:22:04" },
+                    { id: 208, title: "Hábito 3: Poner Primero lo Primero", start: "03:22:04", end: "04:01:39" }
                 ]},
-                { title: "Parte 2: Victoria Pública", items: [
-                    { id: 209, title: "H4: Pensar Ganar-Ganar", start: "00:00:24", end: "00:51:31", videoId: "-ucQ4gG25GY" },
-                    { id: 210, title: "H5: Buscar primero entender, luego ser entendido", start: "00:51:31", end: "01:35:55", videoId: "-ucQ4gG25GY" },
-                    { id: 211, title: "H6: Sinergizar", start: "01:35:55", end: "02:24:05", videoId: "-ucQ4gG25GY" },
-                    { id: 212, title: "H7: Afilar la Sierra", start: "02:24:05", end: "02:48:07", videoId: "-ucQ4gG25GY" },
+                { title: "Victoria Pública", items: [
+                    { id: 209, title: "Hábito 4: Pensar Ganar-Ganar", start: "00:00:24", end: "00:51:31", videoId: "-ucQ4gG25GY" },
+                    { id: 210, title: "Hábito 5: Buscar primero entender", start: "00:51:31", end: "01:35:55", videoId: "-ucQ4gG25GY" },
+                    { id: 211, title: "Hábito 6: Sinergizar", start: "01:35:55", end: "02:24:05", videoId: "-ucQ4gG25GY" },
+                    { id: 212, title: "Hábito 7: Afilar la Sierra", start: "02:24:05", end: "02:48:07", videoId: "-ucQ4gG25GY" },
                     { id: 213, title: "Conclusión final", start: "02:48:07", end: "03:01:50", videoId: "-ucQ4gG25GY" }
                 ]}
             ]},
             personaVitamina: { title: "Persona Vitamina", author: "Marian Rojas Estapé", color: "#ec4899", videoId: "26Atrg0YyVE", quotes: ["Tus relaciones determinan tu salud.", "Abrazar reduce el cortisol."], sections: [
-                { title: "Oxitocina y Vínculos", items: [
+                { title: "Oxitocina y Apego", items: [
                     { id: 300, title: "Introducción", start: "00:00:00", end: "00:07:34" },
-                    { id: 301, title: "1. La hormona de los abrazos", start: "00:07:34", end: "00:32:44" },
-                    { id: 302, title: "2. Los vínculos afectivos", start: "00:32:44", end: "00:44:05" },
-                    { id: 303, title: "3. La empatía", start: "00:44:05", end: "00:53:56" },
-                    { id: 304, title: "4. Hombres y Testosterona", start: "00:53:56", end: "01:07:05" }
+                    { id: 301, title: "La hormona de los abrazos", start: "00:07:34", end: "00:32:44" },
+                    { id: 302, title: "Los vínculos afectivos", start: "00:32:44", end: "00:44:05" },
+                    { id: 303, title: "La empatía como herramienta", start: "00:44:05", end: "00:53:56" },
+                    { id: 304, title: "Diferencias: Hombres y Testosterona", start: "00:53:56", end: "01:07:05" },
+                    { id: 305, title: "Diferencias: Qué sucede en mujeres", start: "01:07:05", end: "01:24:21" },
+                    { id: 306, title: "Tocarse es necesario", start: "01:24:21", end: "01:33:33" },
+                    { id: 307, title: "La oxitocina sorprende", start: "01:33:33", end: "01:53:23" },
+                    { id: 308, title: "No es bueno estar solo", start: "01:53:23", end: "02:01:56" }
                 ]},
-                { title: "Apego y Trauma", items: [
+                { title: "Relaciones y Trauma", items: [
                     { id: 309, title: "9. Qué es el apego", start: "02:01:56", end: "02:30:01" },
                     { id: 310, title: "10. Amamos como nos amaron", start: "02:30:01", end: "02:40:15" },
+                    { id: 311, title: "11. La confusión en la educación", start: "02:40:15", end: "03:10:09" },
                     { id: 312, title: "12. El maltrato", start: "03:10:09", end: "03:54:02" },
-                    { id: 313, title: "13. Sanar heridas", start: "03:54:02", end: "04:42:57" }
+                    { id: 313, title: "13. Cómo sanar las heridas", start: "03:54:02", end: "04:42:57" },
+                    { id: 314, title: "14. El placer y el amor", start: "04:42:57", end: "05:31:17" },
+                    { id: 315, title: "15. Hablemos del amor", start: "05:31:17", end: "05:51:23" }
                 ]},
                 { title: "Personas Tóxicas", items: [
                     { id: 320, title: "20. Qué es una persona tóxica", start: "06:54:09", end: "07:05:47" },
                     { id: 321, title: "21. Identificar personas que no convienen", start: "07:05:47", end: "07:23:56" },
                     { id: 322, title: "22. Saber gestionar personas tóxicas", start: "07:23:56", end: "07:58:14" },
-                    { id: 323, title: "Conclusión: Personas Vitamina", start: "07:58:14", end: "08:08:41" }
+                    { id: 323, title: "Conclusión final", start: "07:58:14", end: "08:08:41" }
                 ]}
             ]}
         };
@@ -393,7 +409,10 @@
                 btn.classList.add('bg-white', 'dark:bg-slate-900', 'text-slate-600', 'dark:text-slate-400', 'border', 'dark:border-slate-700');
             });
             const btn = document.getElementById(`book-btn-${bookId}`);
-            if(btn) { btn.classList.remove('bg-white', 'dark:bg-slate-900', 'text-slate-600', 'dark:text-slate-400'); btn.classList.add('bg-amber-500', 'text-white'); }
+            if(btn) { 
+                btn.classList.remove('bg-white', 'dark:bg-slate-900', 'text-slate-600', 'dark:text-slate-400');
+                btn.classList.add('bg-amber-500', 'text-white');
+            }
             safeSet('book-title-display', library[bookId].title);
             safeSet('book-author-display', library[bookId].author);
             loadRandomQuote(); renderLibraryList();
@@ -440,7 +459,7 @@
                     itemEl.innerHTML = `<div class="flex items-center gap-3 flex-1 cursor-pointer" onclick="toggleComplete(${item.id}, '${item.title}', '${item.start}', '${item.end}', event)">
                         <button class="check-btn ${done ? 'completed' : ''}"><i data-lucide="circle" class="w-5 h-5 icon-circle"></i><i data-lucide="check-circle" class="w-5 h-5 icon-check"></i></button>
                         <div class="flex-1">
-                            <div class="flex items-center gap-2 mb-0.5"><span class="next-badge text-[9px] font-bold text-amber-600 bg-amber-100 px-1 rounded uppercase">Siguiente</span><p class="text-sm font-medium ${done ? 'line-through text-slate-400 decoration-slate-300 font-normal' : 'font-semibold'} leading-tight">${item.title}</p></div>
+                            <div class="flex items-center gap-2 mb-0.5"><span class="next-badge text-[9px] font-bold text-amber-600 bg-amber-100 px-1 rounded uppercase">Siguiente</span><p class="text-sm font-medium ${done ? 'line-through text-slate-400 font-normal' : 'font-bold'} leading-tight">${item.title}</p></div>
                             <div class="text-[10px] text-slate-400 font-mono flex gap-2"><i data-lucide="clock" class="w-3 h-3"></i> ${formatDuration(dur)} ${chapterNotes[`${currentBookId}_${item.id}`] ? '• Nota guardada' : ''}</div>
                         </div></div>
                         <div class="flex items-center gap-1">
@@ -551,8 +570,8 @@
         function renderActionPlan() {
             const list = document.getElementById('action-plan-list'); if(!list) return; list.innerHTML = actionPlan.length ? '' : '<p class="text-xs text-slate-400 italic">No hay hábitos en tu plan todavía.</p>';
             actionPlan.forEach((it, i) => {
-                const el = document.createElement('div'); el.className = 'flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-950 rounded-lg border dark:border-slate-800';
-                el.innerHTML = `<div class="flex gap-3 items-center"><input type="checkbox" ${it.done?'checked':''} onchange="toggleAction(${i})" class="accent-amber-500"><span class="text-sm ${it.done?'line-through opacity-50 dark:text-slate-500 text-slate-400 font-normal':'text-slate-700 dark:text-slate-300 font-bold'}">${it.text}</span></div><button onclick="removeAction(${i})" class="text-slate-300 hover:text-red-500 transition-colors"><i data-lucide="trash-2" class="w-4 h-4"></i></button>`;
+                const el = document.createElement('div'); el.className = 'flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-950 rounded-lg border dark:border-slate-800 shadow-sm';
+                el.innerHTML = `<div class="flex gap-3 items-center"><input type="checkbox" ${it.done?'checked':''} onchange="toggleAction(${i})" class="w-4 h-4 rounded text-amber-500 accent-amber-500"><span class="text-sm ${it.done?'line-through opacity-50 dark:text-slate-500 text-slate-400 font-normal':'text-slate-700 dark:text-slate-300 font-bold'}">${it.text}</span></div><button onclick="removeAction(${i})" class="text-slate-300 hover:text-red-500 transition-colors"><i data-lucide="trash-2" class="w-4 h-4"></i></button>`;
                 list.appendChild(el);
             });
             lucide.createIcons();
