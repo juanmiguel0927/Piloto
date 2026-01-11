@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tracker de Audiolibros & Estadísticas</title>
+    <title>Audiolibro - Seguimiento y Acción</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -15,10 +15,6 @@
                     colors: {
                         slate: { 850: '#1e293b', 950: '#020617' },
                         amber: { 450: '#f59e0b' }
-                    },
-                    animation: {
-                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-                        'spin-slow': 'spin 3s linear infinite',
                     }
                 }
             }
@@ -61,18 +57,27 @@
 
         .chart-bar { transition: height 1s ease-out; }
         .pie-chart { background: conic-gradient(var(--pie-gradient)); border-radius: 50%; }
+
+        .heatmap-cell { width: 10px; height: 10px; border-radius: 2px; }
+        @media (min-width: 640px) { .heatmap-cell { width: 12px; height: 12px; } }
+        .level-0 { background-color: #e2e8f0; }
+        .dark .level-0 { background-color: #1e293b; }
+        .level-1 { background-color: #fde68a; }
+        .level-2 { background-color: #fbbf24; }
+        .level-3 { background-color: #f59e0b; }
+        .level-4 { background-color: #b45309; }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800 font-sans pb-12 transition-colors duration-300 dark:bg-slate-950 dark:text-slate-200">
 
     <!-- Header Fijo -->
-    <div class="sticky top-0 z-10 bg-white shadow-sm border-b border-slate-200 dark:bg-slate-900 dark:border-slate-800 transition-colors duration-300">
+    <div class="sticky top-0 z-20 bg-white shadow-sm border-b border-slate-200 dark:bg-slate-900 dark:border-slate-800 transition-colors duration-300">
         <div class="max-w-4xl mx-auto px-4 pt-4 pb-0">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-3">
                 <div class="flex items-center gap-3">
                     <h1 class="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                        <i data-lucide="library" class="w-6 h-6 text-amber-500"></i>
-                        Mis Audiolibros
+                        <i data-lucide="book-open" class="w-6 h-6 text-amber-500"></i>
+                        Audiolibro
                     </h1>
                     <button onclick="toggleDarkMode()" class="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 transition-colors">
                         <i data-lucide="moon" class="w-5 h-5 hidden dark:block"></i>
@@ -80,10 +85,12 @@
                     </button>
                 </div>
 
-                <div class="flex items-center gap-3 text-sm">
-                    <button onclick="showStats()" class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-amber-50 dark:bg-slate-800 text-amber-700 dark:text-amber-500 hover:bg-amber-100 dark:hover:bg-slate-700 transition-colors font-medium">
-                        <i data-lucide="pie-chart" class="w-4 h-4"></i> Mi Balance
-                    </button>
+                <div class="flex items-center gap-2 text-sm">
+                    <div id="pomodoro-widget" class="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-lg border dark:border-slate-700">
+                        <i data-lucide="timer" class="w-4 h-4 text-amber-500"></i>
+                        <span id="pomo-timer" class="font-mono font-bold w-12 text-center">25:00</span>
+                        <button onclick="togglePomodoro()" id="pomo-btn" class="hover:text-amber-600"><i data-lucide="play" class="w-4 h-4"></i></button>
+                    </div>
                 </div>
             </div>
             
@@ -93,8 +100,8 @@
 
             <div class="flex space-x-6 overflow-x-auto scrollbar-hide">
                 <button onclick="switchView('library')" id="tab-library" class="tab-btn pb-3 px-1 text-sm whitespace-nowrap transition-colors active">Biblioteca</button>
-                <button onclick="switchView('notes')" id="tab-notes" class="tab-btn pb-3 px-1 text-sm whitespace-nowrap transition-colors">Mis Notas</button>
-                <button onclick="switchView('stats')" id="tab-stats" class="tab-btn pb-3 px-1 text-sm whitespace-nowrap transition-colors">Estadísticas & Logros</button>
+                <button onclick="switchView('notes')" id="tab-notes" class="tab-btn pb-3 px-1 text-sm whitespace-nowrap transition-colors">Notas y Favoritos</button>
+                <button onclick="switchView('stats')" id="tab-stats" class="tab-btn pb-3 px-1 text-sm whitespace-nowrap transition-colors">Balance & Constancia</button>
             </div>
         </div>
     </div>
@@ -104,11 +111,16 @@
 
         <!-- VISTA: BIBLIOTECA -->
         <div id="view-library" class="fade-in">
-            <div class="flex space-x-2 overflow-x-auto scrollbar-hide mb-6 pb-2">
+            <div class="flex space-x-2 overflow-x-auto scrollbar-hide mb-4 pb-1">
                 <button onclick="switchBook('habitosAtomicos')" id="book-btn-habitosAtomicos" class="book-select-btn px-4 py-2 rounded-full text-xs font-medium transition-all">Hábitos Atómicos</button>
                 <button onclick="switchBook('cosasBuenas')" id="book-btn-cosasBuenas" class="book-select-btn px-4 py-2 rounded-full text-xs font-medium transition-all">Cosas Buenas</button>
                 <button onclick="switchBook('sieteHabitos')" id="book-btn-sieteHabitos" class="book-select-btn px-4 py-2 rounded-full text-xs font-medium transition-all">7 Hábitos</button>
                 <button onclick="switchBook('personaVitamina')" id="book-btn-personaVitamina" class="book-select-btn px-4 py-2 rounded-full text-xs font-medium transition-all">Persona Vitamina</button>
+            </div>
+
+            <div class="relative mb-6">
+                <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"></i>
+                <input type="text" id="chapter-search" oninput="renderLibraryList()" placeholder="Buscar capítulo o tema..." class="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-sm outline-none transition-all shadow-sm">
             </div>
 
             <div id="quote-card" class="bg-amber-50 dark:bg-slate-900 border-l-4 border-amber-400 p-4 mb-6 rounded-r-xl shadow-sm flex gap-3 items-start">
@@ -132,45 +144,37 @@
 
             <div id="app-container" class="space-y-6 pb-8"></div>
             
-            <!-- PLAN DE ACCIÓN PERSONAL -->
+            <!-- PLAN DE ACCIÓN PERSONAL DETALLADO -->
             <div class="mt-8 p-6 bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800">
-                <div class="flex items-center justify-between mb-4">
-                    <h3 class="font-bold text-slate-800 dark:text-white flex items-center gap-2">
-                        <i data-lucide="list-checks" class="w-5 h-5 text-green-500"></i> Plan de Acción Personal
-                    </h3>
-                </div>
-
-                <!-- Bloque de Indicaciones de Uso -->
-                <div class="mb-6 p-4 bg-blue-50 dark:bg-slate-850 rounded-lg border border-blue-100 dark:border-slate-800 text-slate-600 dark:text-slate-400">
-                    <p class="text-xs font-bold text-blue-700 dark:text-blue-400 mb-2 flex items-center gap-1 uppercase tracking-wider">
-                        <i data-lucide="lightbulb" class="w-3 h-3"></i> Cómo pasar a la acción:
-                    </p>
-                    <ul class="text-[11px] space-y-2 leading-relaxed list-none">
-                        <li class="flex items-start gap-2">
-                            <span class="text-blue-500 font-bold">•</span>
-                            <span><strong>Fórmula de Éxito:</strong> Define exactamente qué harás: <em>"Yo haré [Hábito] a las [Hora] en [Lugar]"</em>.</span>
-                        </li>
-                        <li class="flex items-start gap-2">
-                            <span class="text-blue-500 font-bold">•</span>
-                            <span><strong>Regla de los 2 Minutos:</strong> Simplifica tu acción hasta que tome menos de 2 minutos empezarla.</span>
-                        </li>
-                        <li class="flex items-start gap-2">
-                            <span class="text-blue-500 font-bold">•</span>
-                            <span><strong>Diseño de Ambiente:</strong> Crea señales visuales en tu entorno para que el hábito sea obvio.</span>
-                        </li>
-                    </ul>
+                <h3 class="font-bold text-slate-800 dark:text-white flex items-center gap-2 mb-4 text-lg">
+                    <i data-lucide="zap" class="w-5 h-5 text-amber-500"></i> Plan de Acción Personal
+                </h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 text-slate-600 dark:text-slate-400">
+                    <div class="p-3 bg-blue-50/50 dark:bg-slate-850 rounded-lg border border-blue-100 dark:border-slate-800">
+                        <p class="text-[10px] font-black text-blue-700 dark:text-blue-400 uppercase mb-1">1. Intención clara</p>
+                        <p class="text-[11px] leading-snug">Escribe: "Yo haré <strong>[Hábito]</strong> a las <strong>[Hora]</strong> en <strong>[Lugar]</strong>". Elimina la ambigüedad.</p>
+                    </div>
+                    <div class="p-3 bg-green-50/50 dark:bg-slate-850 rounded-lg border border-green-100 dark:border-slate-800">
+                        <p class="text-[10px] font-black text-green-700 dark:text-green-400 uppercase mb-1">2. La Regla de Oro</p>
+                        <p class="text-[11px] leading-snug">Si es un hábito nuevo, debe tomar menos de <strong>2 minutos</strong>. Domina el arte de aparecer.</p>
+                    </div>
+                    <div class="p-3 bg-purple-50/50 dark:bg-slate-850 rounded-lg border border-purple-100 dark:border-slate-800">
+                        <p class="text-[10px] font-black text-purple-700 dark:text-purple-400 uppercase mb-1">3. Entorno Visual</p>
+                        <p class="text-[11px] leading-snug">Hazlo <strong>obvio</strong>. Coloca el disparador del hábito en tu línea de visión directa.</p>
+                    </div>
                 </div>
 
                 <div id="action-plan-list" class="space-y-3"></div>
-                <div class="mt-4 flex gap-2">
-                    <input type="text" id="new-action-input" class="flex-1 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-amber-500" placeholder="Ej: Haré 5 min de lectura a las 9 PM en mi cama">
-                    <button onclick="addActionItem()" class="bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-lg text-sm font-bold transition-colors">Añadir</button>
+                <div class="mt-6 flex gap-2">
+                    <input type="text" id="new-action-input" class="flex-1 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-amber-500 shadow-inner" placeholder="Escribe tu próximo paso atómico...">
+                    <button onclick="addActionItem()" class="bg-amber-500 hover:bg-amber-600 text-white px-5 py-2.5 rounded-lg text-sm font-bold transition-all shadow-md active:scale-95">Añadir</button>
                 </div>
             </div>
 
-             <div class="mt-8 mb-12 text-center border-t border-slate-200 dark:border-slate-800 pt-8">
-                <button onclick="resetCurrentBook()" class="text-xs text-slate-400 hover:text-red-500 underline transition-colors mb-4 flex items-center justify-center gap-1 mx-auto">
-                    <i data-lucide="rotate-ccw" class="w-3 h-3"></i> Reiniciar progreso de este libro
+             <div class="mt-12 mb-12 text-center border-t border-slate-200 dark:border-slate-800 pt-8">
+                <button onclick="resetCurrentBook()" class="group text-xs text-slate-400 hover:text-red-500 transition-colors mb-4 flex items-center justify-center gap-1 mx-auto">
+                    <i data-lucide="rotate-ccw" class="w-3 h-3 group-hover:rotate-[-45deg] transition-transform"></i> Reiniciar progreso de este libro
                 </button>
             </div>
         </div>
@@ -178,80 +182,61 @@
         <!-- VISTA: CENTRO DE REFLEXIÓN -->
         <div id="view-notes" class="hidden fade-in space-y-6">
             <div class="flex items-center justify-between mb-2">
-                <h2 class="text-xl font-bold text-slate-800 dark:text-white">Centro de Reflexiones</h2>
-                <button onclick="window.print()" class="text-xs text-amber-600 font-bold hover:underline flex items-center gap-1"><i data-lucide="printer" class="w-3 h-3"></i> Exportar</button>
+                <h2 class="text-xl font-bold text-slate-800 dark:text-white">Notas y Favoritos</h2>
+                <div class="flex gap-2">
+                    <button onclick="renderAllNotes(true)" class="text-xs bg-white dark:bg-slate-800 border dark:border-slate-700 px-3 py-1.5 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-50 transition-colors">Solo Favoritos</button>
+                    <button onclick="window.print()" class="text-xs bg-amber-500 text-white px-3 py-1.5 rounded-lg font-bold shadow-sm hover:bg-amber-600 transition-colors">Exportar</button>
+                </div>
             </div>
             <div id="all-notes-container" class="space-y-4 pb-8"></div>
         </div>
 
         <!-- VISTA: ESTADÍSTICAS -->
         <div id="view-stats" class="hidden fade-in space-y-8">
-            <div class="bg-white dark:bg-slate-900 p-6 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden">
-                <div class="z-10 flex-1">
-                    <h3 class="text-lg font-bold text-slate-800 dark:text-white mb-1 flex items-center gap-2">
-                        <i data-lucide="target" class="w-5 h-5 text-red-500"></i> Meta Diaria
-                    </h3>
-                    <p class="text-slate-500 dark:text-slate-400 text-sm mb-4">"Pequeños pasos, grandes resultados".</p>
-                    <div class="flex items-center gap-3">
-                        <button onclick="adjustDailyGoal(-5)" class="p-1 rounded bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500"><i data-lucide="minus" class="w-4 h-4"></i></button>
-                        <span id="daily-goal-target" class="font-mono font-bold text-xl w-16 text-center">30m</span>
-                        <button onclick="adjustDailyGoal(5)" class="p-1 rounded bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500"><i data-lucide="plus" class="w-4 h-4"></i></button>
-                    </div>
-                </div>
-                <div class="relative w-32 h-32 flex items-center justify-center">
-                    <svg class="transform -rotate-90 w-32 h-32">
-                        <circle cx="64" cy="64" r="56" stroke="currentColor" stroke-width="8" fill="transparent" class="text-slate-100 dark:text-slate-800" />
-                        <circle id="daily-progress-ring" cx="64" cy="64" r="56" stroke="currentColor" stroke-width="8" fill="transparent" stroke-dasharray="351.86" stroke-dashoffset="351.86" class="text-amber-500 transition-all duration-1000 ease-out" />
-                    </svg>
-                    <div class="absolute inset-0 flex flex-col items-center justify-center">
-                        <span id="daily-progress-val" class="text-2xl font-bold text-slate-800 dark:text-white">0%</span>
-                        <span class="text-[10px] text-slate-400 uppercase">Completado</span>
-                    </div>
-                </div>
+            <div class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                <h3 class="text-sm font-bold text-slate-700 dark:text-slate-300 mb-4 flex items-center gap-2">
+                    <i data-lucide="calendar-check" class="w-4 h-4 text-green-500"></i> Historial de Consistencia (90 días)
+                </h3>
+                <div id="streak-heatmap" class="flex flex-wrap gap-1 justify-center"></div>
             </div>
 
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div class="bg-white dark:bg-slate-900 p-4 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800">
-                    <div class="flex items-center gap-2 mb-2 text-slate-500 dark:text-slate-400"><i data-lucide="clock" class="w-4 h-4 text-blue-500"></i> <span class="text-xs font-bold uppercase">Hoy</span></div>
-                    <p id="stat-today" class="text-2xl font-bold text-slate-800 dark:text-white">0m</p>
+                <div class="bg-white dark:bg-slate-900 p-4 rounded-xl border dark:border-slate-800 shadow-sm">
+                    <p class="text-[10px] font-bold text-slate-400 uppercase mb-1">Hoy</p>
+                    <p id="stat-today" class="text-2xl font-bold text-blue-500">0m</p>
                 </div>
-                <div class="bg-white dark:bg-slate-900 p-4 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800">
-                    <div class="flex items-center gap-2 mb-2 text-slate-500 dark:text-slate-400"><i data-lucide="flame" class="w-4 h-4 text-orange-500"></i> <span class="text-xs font-bold uppercase">Racha</span></div>
-                    <p id="stat-streak" class="text-2xl font-bold text-slate-800 dark:text-white">0 días</p>
+                <div class="bg-white dark:bg-slate-900 p-4 rounded-xl border dark:border-slate-800 shadow-sm">
+                    <p class="text-[10px] font-bold text-slate-400 uppercase mb-1">Racha</p>
+                    <p id="stat-streak" class="text-2xl font-bold text-orange-500">0 días</p>
                 </div>
-                <div class="bg-white dark:bg-slate-900 p-4 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800">
-                    <div class="flex items-center gap-2 mb-2 text-slate-500 dark:text-slate-400"><i data-lucide="book-open" class="w-4 h-4 text-purple-500"></i> <span class="text-xs font-bold uppercase">Caps</span></div>
-                    <p id="stat-chapters" class="text-2xl font-bold text-slate-800 dark:text-white">0</p>
+                <div class="bg-white dark:bg-slate-900 p-4 rounded-xl border dark:border-slate-800 shadow-sm">
+                    <p class="text-[10px] font-bold text-slate-400 uppercase mb-1">Tiempo Total</p>
+                    <p id="stat-total-time" class="text-2xl font-bold dark:text-white">0h 0m</p>
                 </div>
-                <div class="bg-white dark:bg-slate-900 p-4 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800">
-                    <div class="flex items-center gap-2 mb-2 text-slate-500 dark:text-slate-400"><i data-lucide="award" class="w-4 h-4 text-amber-500"></i> <span class="text-xs font-bold uppercase">Nivel</span></div>
-                    <p id="stat-level" class="text-lg font-bold text-slate-800 dark:text-white">Novato</p>
+                <div class="bg-white dark:bg-slate-900 p-4 rounded-xl border dark:border-slate-800 shadow-sm">
+                    <p class="text-[10px] font-bold text-slate-400 uppercase mb-1">Nivel</p>
+                    <p id="stat-level" class="text-lg font-bold text-amber-500">Novato</p>
                 </div>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div class="bg-white dark:bg-slate-900 p-6 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col">
-                    <h3 class="text-sm font-bold text-slate-700 dark:text-slate-300 mb-6 flex items-center gap-2"><i data-lucide="pie-chart" class="w-4 h-4"></i> Balance de Temas</h3>
-                    <div class="flex items-center justify-center gap-8">
+                <div class="bg-white dark:bg-slate-900 p-6 rounded-xl border dark:border-slate-800 flex flex-col">
+                    <h3 class="text-sm font-bold text-slate-700 dark:text-slate-300 mb-6 flex items-center gap-2"><i data-lucide="pie-chart" class="w-4 h-4"></i> Distribución por Libro</h3>
+                    <div class="flex items-center justify-center gap-6 flex-1">
                         <div id="distribution-pie" class="pie-chart w-32 h-32 shadow-inner" style="--pie-gradient: #e2e8f0 0% 100%;"></div>
-                        <div id="distribution-legend" class="text-xs space-y-2"><span class="text-slate-400 italic">Sin datos</span></div>
+                        <div id="distribution-legend" class="text-xs space-y-2 flex-1"></div>
                     </div>
                 </div>
-                <div class="bg-white dark:bg-slate-900 p-6 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col">
+                <div class="bg-white dark:bg-slate-900 p-6 rounded-xl border dark:border-slate-800 flex flex-col">
                     <h3 class="text-sm font-bold text-slate-700 dark:text-slate-300 mb-6 flex items-center gap-2"><i data-lucide="bar-chart-2" class="w-4 h-4"></i> Últimos 7 días</h3>
                     <div id="weekly-chart" class="flex items-end justify-between h-32 gap-2 mt-auto"></div>
                 </div>
             </div>
 
-            <div class="bg-white dark:bg-slate-900 p-6 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800">
-                <h3 class="text-sm font-bold text-slate-700 dark:text-slate-300 mb-4 flex items-center gap-2"><i data-lucide="trophy" class="w-4 h-4 text-yellow-500"></i> Sala de Trofeos</h3>
-                <div id="achievements-container" class="grid grid-cols-2 sm:grid-cols-4 gap-3"></div>
-            </div>
-
-            <div class="text-center pt-8 border-t border-slate-100 dark:border-slate-800 flex flex-col items-center gap-2">
+            <div class="text-center pb-8 flex flex-col items-center gap-3">
                 <div class="flex gap-4">
-                    <button onclick="exportData()" class="flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-lg text-xs font-medium"><i data-lucide="download" class="w-4 h-4"></i> Exportar</button>
-                    <button onclick="triggerImport()" class="flex items-center gap-2 px-4 py-2 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 rounded-lg text-xs font-medium"><i data-lucide="upload" class="w-4 h-4"></i> Importar</button>
+                    <button onclick="exportData()" class="flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-lg text-xs font-medium"><i data-lucide="download" class="w-4 h-4"></i> Exportar Datos</button>
+                    <button onclick="triggerImport()" class="flex items-center gap-2 px-4 py-2 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 rounded-lg text-xs font-medium"><i data-lucide="upload" class="w-4 h-4"></i> Importar Datos</button>
                 </div>
                 <input type="file" id="import-file" class="hidden" accept=".json" onchange="handleFileImport(event)">
             </div>
@@ -262,8 +247,13 @@
     <div id="video-modal" class="modal-overlay hidden fixed inset-0 z-50 items-center justify-center bg-black/90 p-4 backdrop-blur-sm">
         <div class="bg-black w-full max-w-4xl rounded-xl overflow-hidden shadow-2xl relative flex flex-col border border-slate-800">
             <div class="flex items-center justify-between p-3 bg-slate-900 text-white border-b border-slate-800">
-                <span class="text-sm font-medium flex items-center gap-2"><i data-lucide="youtube" class="w-4 h-4 text-red-500"></i> Reproduciendo</span>
-                <button onclick="closeVideo()" class="text-slate-400 hover:text-white transition-colors p-1"><i data-lucide="x" class="w-5 h-5"></i></button>
+                <div class="flex items-center gap-3">
+                    <span class="text-sm font-medium flex items-center gap-2"><i data-lucide="youtube" class="w-4 h-4 text-red-500"></i> Reproduciendo</span>
+                    <div class="px-2 py-0.5 bg-amber-500 rounded text-[10px] font-black flex items-center gap-1 shadow-sm">
+                        <i data-lucide="clock" class="w-3 h-3"></i> Restan: <span id="playback-countdown">00:00</span>
+                    </div>
+                </div>
+                <button onclick="closeVideo()" class="text-slate-400 hover:text-white p-1"><i data-lucide="x" class="w-5 h-5"></i></button>
             </div>
             <div class="relative w-full aspect-video"><iframe id="youtube-iframe" class="absolute inset-0 w-full h-full" src="" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>
         </div>
@@ -272,160 +262,141 @@
     <div id="notes-modal" class="modal-overlay hidden fixed inset-0 z-50 items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
         <div class="bg-white dark:bg-slate-900 w-full max-w-lg rounded-xl shadow-2xl flex flex-col border dark:border-slate-800">
             <div class="p-4 border-b dark:border-slate-800 flex justify-between items-center"><h3 class="font-bold dark:text-white flex items-center gap-2"><i data-lucide="pen-tool" class="w-4 h-4 text-amber-500"></i> Notas</h3><button onclick="closeNotes()"><i data-lucide="x" class="w-5 h-5"></i></button></div>
-            <div class="p-4"><p id="note-chapter-title" class="text-xs text-slate-500 mb-2"></p><textarea id="note-textarea" class="w-full h-40 p-3 rounded-lg bg-slate-50 dark:bg-slate-950 border dark:border-slate-800 text-sm focus:ring-2 focus:ring-amber-500 outline-none resize-none" placeholder="¿Qué aprendiste hoy?"></textarea></div>
+            <div class="p-4"><p id="note-chapter-title" class="text-xs text-slate-500 mb-2"></p><textarea id="note-textarea" class="w-full h-40 p-3 rounded-lg bg-slate-50 dark:bg-slate-950 border dark:border-slate-800 text-sm outline-none focus:ring-2 focus:ring-amber-500 resize-none" placeholder="¿Qué aprendiste hoy?"></textarea></div>
             <div class="p-4 border-t dark:border-slate-800 flex justify-end"><button onclick="saveNote()" class="px-4 py-2 bg-amber-500 text-white rounded-lg text-sm font-medium">Guardar</button></div>
         </div>
     </div>
 
-    <!-- LOGICA -->
     <script>
         const library = {
             habitosAtomicos: { title: "Hábitos Atómicos", author: "James Clear", color: "#ef4444", videoId: "CgGiyfv7Xpc", quotes: ["No te elevas al nivel de tus metas. Caes al nivel de tus sistemas.", "Los hábitos son el interés compuesto de la superación personal."], sections: [
-                { title: "Introducción", items: [{ id: 0, title: "Introducción: Mi historia", start: "00:00:00", end: "00:26:50" }] },
                 { title: "Principios Fundamentales", items: [
-                    { id: 1, title: "1. El sorprendente poder de los hábitos atómicos", start: "00:27:05", end: "01:05:30" },
+                    { id: 0, title: "Introducción: Mi historia", start: "00:00:00", end: "00:26:50" },
+                    { id: 1, title: "1. El Sorprendente Poder de los Hábitos Atómicos", start: "00:27:05", end: "01:05:30" },
                     { id: 2, title: "2. Cómo tus hábitos moldean tu identidad", start: "01:05:30", end: "01:36:11" },
-                    { id: 3, title: "3. Construir mejores hábitos en 4 pasos", start: "01:36:11", end: "02:07:09" }
+                    { id: 3, title: "3. Cómo construir mejores hábitos en 4 pasos", start: "01:36:11", end: "02:07:09" }
                 ]},
-                { title: "1ª Ley: Hacerlo Obvio", items: [
-                    { id: 4, title: "4. El hombre que no se veía bien", start: "02:07:09", end: "02:26:54" },
+                { title: "Las 4 Leyes", items: [
+                    { id: 4, title: "4. El hombre que no se veía bien (1ª Ley)", start: "02:07:09", end: "02:26:54" },
                     { id: 5, title: "5. La mejor manera de comenzar un hábito", start: "02:26:54", end: "02:50:02" },
                     { id: 6, title: "6. La motivación está sobrevalorada", start: "02:50:02", end: "03:12:44" },
-                    { id: 7, title: "7. El secreto del autocontrol", start: "03:12:44", end: "03:23:53" }
-                ]},
-                { title: "2ª Ley: Hacerlo Atractivo", items: [
-                    { id: 8, title: "8. Cómo lograr que un hábito sea irresistible", start: "03:24:07", end: "03:49:54" },
-                    { id: 9, title: "9. Papel de familia y amigos en hábitos", start: "03:49:54", end: "04:14:32" },
-                    { id: 10, title: "10. Localizar y arreglar causas de malos hábitos", start: "04:14:32", end: "04:36:52" }
-                ]},
-                { title: "3ª Ley: Hacerlo Sencillo", items: [
-                    { id: 11, title: "11. Avanza despacio, pero no des marcha atrás", start: "04:37:06", end: "04:49:33" },
+                    { id: 7, title: "7. El secreto del autocontrol", start: "03:12:44", end: "03:23:53" },
+                    { id: 8, title: "8. Cómo lograr que un hábito sea irresistible (2ª Ley)", start: "03:24:07", end: "03:49:54" },
+                    { id: 9, title: "9. El papel de la familia y los amigos", start: "03:49:54", end: "04:14:32" },
+                    { id: 10, title: "10. Cómo localizar y arreglar causas de malos hábitos", start: "04:14:32", end: "04:36:52" },
+                    { id: 11, title: "11. Avanza despacio, pero no des marcha atrás (3ª Ley)", start: "04:37:06", end: "04:49:33" },
                     { id: 12, title: "12. La ley del menor esfuerzo", start: "04:49:33", end: "05:13:20" },
-                    { id: 13, title: "13. Dejar de postergar: Regla 2 minutos", start: "05:13:20", end: "05:30:02" },
-                    { id: 14, title: "14. Hacer inevitables los buenos hábitos", start: "05:30:02", end: "05:47:05" }
-                ]},
-                { title: "4ª Ley: Hacerlo Satisfactorio", items: [
-                    { id: 15, title: "15. Regla cardinal del cambio de conducta", start: "05:47:18", end: "06:14:37" },
-                    { id: 16, title: "16. Cómo mantener los hábitos todos los días", start: "06:14:37", end: "06:39:28" },
+                    { id: 13, title: "13. Cómo dejar de postergar (Regla 2 minutos)", start: "05:13:20", end: "05:30:02" },
+                    { id: 14, title: "14. Cómo hacer inevitables los buenos hábitos", start: "05:30:02", end: "05:47:05" },
+                    { id: 15, title: "15. La regla cardinal del cambio de conducta (4ª Ley)", start: "05:47:18", end: "06:14:37" },
+                    { id: 16, title: "16. Cómo mantener los buenos hábitos todos los días", start: "06:14:37", end: "06:39:28" },
                     { id: 17, title: "17. Cómo un socio corresponsable cambia todo", start: "06:39:28", end: "06:54:29" }
                 ]},
                 { title: "Tácticas Avanzadas", items: [
                     { id: 18, title: "18. La verdad acerca del talento", start: "06:54:43", end: "07:23:04" },
                     { id: 19, title: "19. La regla de Ricitos de Oro", start: "07:23:04", end: "07:41:26" },
-                    { id: 20, title: "20. El inconveniente de crear buenos hábitos", start: "07:41:26", end: "08:06:22" }
-                ]},
-                { title: "Conclusión", items: [{ id: 21, title: "El secreto para resultados que duren", start: "08:06:22", end: "08:11:42" }] }
+                    { id: 20, title: "20. Inconveniente de crear buenos hábitos", start: "07:41:26", end: "08:06:22" },
+                    { id: 21, title: "Conclusión: El secreto para resultados que duren", start: "08:06:22", end: "08:11:42" }
+                ]}
             ]},
             cosasBuenas: { title: "Cosas Buenas", author: "Marian Rojas Estapé", color: "#3b82f6", videoId: "UiedpTbutXg", quotes: ["La felicidad no se define, se experimenta.", "Comprender es aliviar."], sections: [
-                { title: "Introducción", items: [{ id: 100, title: "Introducción", start: "00:00:00", end: "00:11:59" }] },
-                { title: "Capítulos", items: [
+                { title: "Mente y Hormonas", items: [
+                    { id: 100, title: "Introducción", start: "00:00:00", end: "00:11:59" },
                     { id: 101, title: "1. El cerebro humano y sistemas operativos", start: "00:11:59", end: "00:50:19" },
                     { id: 102, title: "2. El antídoto al sufrimiento: el amor", start: "00:50:19", end: "01:44:16" },
-                    { id: 103, title: "3. El Cortisol", start: "01:44:16", end: "02:24:57" },
+                    { id: 103, title: "3. El Cortisol: Tu aliado y tu enemigo", start: "01:44:16", end: "02:24:57" }
+                ]},
+                { title: "Gestión Emocional", items: [
                     { id: 104, title: "4. Ni lo que pasó ni lo que vendrá", start: "02:24:57", end: "03:35:49" },
                     { id: 105, title: "5. Vivir el momento presente", start: "03:35:49", end: "04:40:38" },
-                    { id: 106, title: "6. Las emociones y su repercusión en la salud", start: "04:40:38", end: "05:37:21" },
+                    { id: 106, title: "6. Las emociones y su repercusión en la salud", start: "04:40:38", end: "05:37:21" }
+                ]},
+                { title: "Plan de Acción", items: [
                     { id: 107, title: "7. ¿Qué cosas o actitudes elevan el cortisol?", start: "05:37:21", end: "06:36:28" },
                     { id: 108, title: "8. ¿Cómo bajar el cortisol?", start: "06:36:28", end: "07:11:47" },
                     { id: 109, title: "9. Tu mejor versión", start: "07:11:47", end: "07:34:53" }
                 ]}
             ]},
-            sieteHabitos: { title: "7 Hábitos", author: "Stephen Covey", color: "#10b981", videoId: "SXaY1Bz8Ndk", quotes: ["Siembra un pensamiento, cosecha una acción.", "Busca primero entender."], sections: [
+            sieteHabitos: { title: "7 Hábitos", author: "Stephen Covey", color: "#10b981", videoId: "SXaY1Bz8Ndk", quotes: ["La victoria privada precede a la victoria pública.", "Busca primero entender."], sections: [
                 { title: "Parte 1: Victoria Privada", items: [
-                    { id: 200, title: "Intro y Paradigmas", start: "00:00:22", end: "00:23:24" },
+                    { id: 200, title: "Paradigmas y Principios", start: "00:00:22", end: "00:23:24" },
                     { id: 201, title: "Panorama General de los 7 Hábitos", start: "00:23:24", end: "00:36:25" },
-                    { id: 202, title: "Principios y Paradigmas", start: "00:36:25", end: "01:14:16" },
-                    { id: 203, title: "Efectividad y Balance P/CP", start: "01:14:16", end: "01:26:57" },
                     { id: 204, title: "La Cuenta Bancaria Emocional", start: "01:26:57", end: "01:42:48" },
-                    { id: 205, title: "Hábito 1: Ser Proactivo", start: "01:42:48", end: "02:10:10" },
-                    { id: 206, title: "Círculo de Influencia", start: "02:10:10", end: "02:38:33" },
-                    { id: 207, title: "Hábito 2: Fin en Mente", start: "02:38:33", end: "03:22:04" },
-                    { id: 208, title: "Hábito 3: Primero lo Primero", start: "03:22:04", end: "04:01:39" }
+                    { id: 205, title: "H1: Ser Proactivo", start: "01:42:48", end: "02:10:10" },
+                    { id: 207, title: "H2: Comenzar con un Fin en Mente", start: "02:38:33", end: "03:22:04" },
+                    { id: 208, title: "H3: Poner Primero lo Primero", start: "03:22:04", end: "04:01:39" }
                 ]},
                 { title: "Parte 2: Victoria Pública", items: [
-                    { id: 209, title: "Hábito 4: Pensar Ganar-Ganar", start: "00:00:24", end: "00:51:31", videoId: "-ucQ4gG25GY" },
-                    { id: 210, title: "Hábito 5: Buscar Primero Entender", start: "00:51:31", end: "01:35:55", videoId: "-ucQ4gG25GY" },
-                    { id: 211, title: "Hábito 6: Sinergizar", start: "01:35:55", end: "02:24:05", videoId: "-ucQ4gG25GY" },
-                    { id: 212, title: "Hábito 7: Afilar la Sierra", start: "02:24:05", end: "02:48:07", videoId: "-ucQ4gG25GY" },
-                    { id: 213, title: "Conclusión y Reprogramación", start: "02:48:07", end: "03:01:50", videoId: "-ucQ4gG25GY" }
+                    { id: 209, title: "H4: Pensar Ganar-Ganar", start: "00:00:24", end: "00:51:31", videoId: "-ucQ4gG25GY" },
+                    { id: 210, title: "H5: Buscar primero entender, luego ser entendido", start: "00:51:31", end: "01:35:55", videoId: "-ucQ4gG25GY" },
+                    { id: 211, title: "H6: Sinergizar", start: "01:35:55", end: "02:24:05", videoId: "-ucQ4gG25GY" },
+                    { id: 212, title: "H7: Afilar la Sierra", start: "02:24:05", end: "02:48:07", videoId: "-ucQ4gG25GY" },
+                    { id: 213, title: "Conclusión final", start: "02:48:07", end: "03:01:50", videoId: "-ucQ4gG25GY" }
                 ]}
             ]},
-            personaVitamina: { title: "Persona Vitamina", author: "Marian Rojas Estapé", color: "#ec4899", videoId: "26Atrg0YyVE", quotes: ["Tus relaciones determinan tu felicidad.", "Abrazar reduce el cortisol."], sections: [
+            personaVitamina: { title: "Persona Vitamina", author: "Marian Rojas Estapé", color: "#ec4899", videoId: "26Atrg0YyVE", quotes: ["Tus relaciones determinan tu salud.", "Abrazar reduce el cortisol."], sections: [
                 { title: "Oxitocina y Vínculos", items: [
                     { id: 300, title: "Introducción", start: "00:00:00", end: "00:07:34" },
                     { id: 301, title: "1. La hormona de los abrazos", start: "00:07:34", end: "00:32:44" },
                     { id: 302, title: "2. Los vínculos afectivos", start: "00:32:44", end: "00:44:05" },
-                    { id: 303, title: "3. La empatía como herramienta", start: "00:44:05", end: "00:53:56" },
-                    { id: 304, title: "4. Hombres y Testosterona", start: "00:53:56", end: "01:07:05" },
-                    { id: 305, title: "5. ¿Qué sucede en las mujeres?", start: "01:07:05", end: "01:24:21" },
-                    { id: 306, title: "6. Tocarse es necesario", start: "01:24:21", end: "01:33:33" },
-                    { id: 307, title: "7. La oxitocina sorprende", start: "01:33:33", end: "01:53:23" },
-                    { id: 308, title: "8. No es bueno estar solo", start: "01:53:23", end: "02:01:56" }
+                    { id: 303, title: "3. La empatía", start: "00:44:05", end: "00:53:56" },
+                    { id: 304, title: "4. Hombres y Testosterona", start: "00:53:56", end: "01:07:05" }
                 ]},
-                { title: "El Apego", items: [
+                { title: "Apego y Trauma", items: [
                     { id: 309, title: "9. Qué es el apego", start: "02:01:56", end: "02:30:01" },
                     { id: 310, title: "10. Amamos como nos amaron", start: "02:30:01", end: "02:40:15" },
-                    { id: 311, title: "11. La confusión en la educación", start: "02:40:15", end: "03:10:09" },
-                    { id: 312, title: "12. El maltrato que más perjudica", start: "03:10:09", end: "03:54:02" },
-                    { id: 313, title: "13. Cómo sanar las heridas", start: "03:54:02", end: "04:42:57" }
+                    { id: 312, title: "12. El maltrato", start: "03:10:09", end: "03:54:02" },
+                    { id: 313, title: "13. Sanar heridas", start: "03:54:02", end: "04:42:57" }
                 ]},
-                { title: "Placer y Amor", items: [
-                    { id: 314, title: "14. El placer", start: "04:42:57", end: "05:31:17" },
-                    { id: 315, title: "15. Hablemos del amor", start: "05:31:17", end: "05:51:23" },
-                    { id: 316, title: "16. Elegir bien es un éxito", start: "05:51:23", end: "06:05:51" },
-                    { id: 317, title: "17. La teoría de la pirámide", start: "06:05:51", end: "06:28:19" },
-                    { id: 318, title: "18. Mejorar el éxito en una relación", start: "06:28:19", end: "06:44:26" },
-                    { id: 319, title: "19. Personalidad altamente sensible", start: "06:44:26", end: "06:54:09" }
-                ]},
-                { title: "Personas Tóxicas y Vitamina", items: [
+                { title: "Personas Tóxicas", items: [
                     { id: 320, title: "20. Qué es una persona tóxica", start: "06:54:09", end: "07:05:47" },
-                    { id: 321, title: "21. Identificar a las personas que no convienen", start: "07:05:47", end: "07:23:56" },
-                    { id: 322, title: "22. Saber gestionar a las personas tóxicas", start: "07:23:56", end: "07:58:14" },
-                    { id: 323, title: "Personas Vitamina (Conclusión)", start: "07:58:14", end: "08:08:41" }
+                    { id: 321, title: "21. Identificar personas que no convienen", start: "07:05:47", end: "07:23:56" },
+                    { id: 322, title: "22. Saber gestionar personas tóxicas", start: "07:23:56", end: "07:58:14" },
+                    { id: 323, title: "Conclusión: Personas Vitamina", start: "07:58:14", end: "08:08:41" }
                 ]}
             ]}
         };
 
-        const achievementsList = [
-            { id: "first_step", title: "Primer Paso", desc: "Un capítulo completado", icon: "footprints" },
-            { id: "streak_3", title: "Constancia", desc: "Racha de 3 días", icon: "flame" },
-            { id: "bookworm", title: "Bibliotecario", desc: "Escucha 3 libros distintos", icon: "library" },
-            { id: "scholar", title: "Erudito", desc: "10 horas totales", icon: "graduation-cap" }
-        ];
-
         let currentBookId = localStorage.getItem('activeBookId') || 'habitosAtomicos';
         let listeningHistory = JSON.parse(localStorage.getItem('listeningHistory')) || []; 
         let chapterNotes = JSON.parse(localStorage.getItem('chapterNotes')) || {}; 
+        let favorites = JSON.parse(localStorage.getItem('favorites')) || []; 
         let actionPlan = JSON.parse(localStorage.getItem('actionPlan')) || [];
         let dailyGoalMinutes = parseInt(localStorage.getItem('dailyGoalMinutes')) || 30;
         let activeNoteId = null;
+        let pomoInterval = null, pomoTime = 1500, pomoActive = false;
+        let countdownInterval = null;
+
+        function safeSet(id, text) { const el = document.getElementById(id); if (el) el.innerText = text; }
 
         function switchView(viewName) {
             ['library', 'notes', 'stats'].forEach(v => {
-                document.getElementById(`view-${v}`).classList.add('hidden');
-                document.getElementById(`tab-${v}`).classList.remove('active');
+                const el = document.getElementById(`view-${v}`);
+                const tab = document.getElementById(`tab-${v}`);
+                if(el) el.classList.add('hidden');
+                if(tab) tab.classList.remove('active');
             });
-            document.getElementById(`view-${viewName}`).classList.remove('hidden');
-            document.getElementById(`tab-${viewName}`).classList.add('active');
-            if(viewName === 'stats') renderStats();
+            const viewEl = document.getElementById(`view-${viewName}`);
+            const tabEl = document.getElementById(`tab-${viewName}`);
+            if(viewEl) viewEl.classList.remove('hidden');
+            if(tabEl) tabEl.classList.add('active');
+            if(viewName === 'stats') { renderStats(); renderHeatmap(); }
             if(viewName === 'notes') renderAllNotes();
-            if(viewName === 'library') renderActionPlan();
+            if(viewName === 'library') { renderLibraryList(); renderActionPlan(); }
         }
 
         function switchBook(bookId) {
             if (!library[bookId]) bookId = 'habitosAtomicos';
-            currentBookId = bookId;
-            localStorage.setItem('activeBookId', bookId);
+            currentBookId = bookId; localStorage.setItem('activeBookId', bookId);
             document.querySelectorAll('.book-select-btn').forEach(btn => {
                 btn.classList.remove('bg-amber-500', 'text-white');
-                btn.classList.add('bg-slate-200', 'dark:bg-slate-800', 'text-slate-600', 'dark:text-slate-400');
+                btn.classList.add('bg-white', 'dark:bg-slate-900', 'text-slate-600', 'dark:text-slate-400', 'border', 'dark:border-slate-700');
             });
-            document.getElementById(`book-btn-${bookId}`).classList.replace('bg-slate-200', 'bg-amber-500');
-            document.getElementById(`book-btn-${bookId}`).classList.replace('text-slate-600', 'text-white');
-            document.getElementById('book-title-display').innerText = library[bookId].title;
-            document.getElementById('book-author-display').innerText = library[bookId].author;
-            loadRandomQuote();
-            renderLibraryList();
+            const btn = document.getElementById(`book-btn-${bookId}`);
+            if(btn) { btn.classList.remove('bg-white', 'dark:bg-slate-900', 'text-slate-600', 'dark:text-slate-400'); btn.classList.add('bg-amber-500', 'text-white'); }
+            safeSet('book-title-display', library[bookId].title);
+            safeSet('book-author-display', library[bookId].author);
+            loadRandomQuote(); renderLibraryList();
         }
 
         function toggleComplete(id, title, start, end, e) {
@@ -435,64 +406,55 @@
             if (idx > -1) listeningHistory.splice(idx, 1);
             else { listeningHistory.push({ timestamp: Date.now(), duration: dur, bookId: currentBookId, sectionId: id, title: title }); triggerConfetti(); }
             localStorage.setItem('listeningHistory', JSON.stringify(listeningHistory));
+            renderLibraryList(); updateGlobalProgress();
+        }
+
+        function toggleFavorite(id, e) {
+            if(e) e.stopPropagation();
+            const key = `${currentBookId}_${id}`;
+            const idx = favorites.indexOf(key);
+            if(idx > -1) favorites.splice(idx, 1); else favorites.push(key);
+            localStorage.setItem('favorites', JSON.stringify(favorites));
             renderLibraryList();
         }
 
         function renderLibraryList() {
-            const container = document.getElementById('app-container');
-            container.innerHTML = '';
-            const book = library[currentBookId];
-            let firstUncompleted = false, bookComp = 0, bookTotal = 0;
+            const container = document.getElementById('app-container'), book = library[currentBookId], search = (document.getElementById('chapter-search')?.value || "").toLowerCase();
+            if(!container) return; container.innerHTML = ''; let firstUncompleted = false, bookComp = 0, bookTotal = 0;
             const completedIds = listeningHistory.filter(l => l.bookId === currentBookId).map(l => l.sectionId);
 
             book.sections.forEach(sec => {
+                const filteredItems = sec.items.filter(i => i.title.toLowerCase().includes(search));
+                if(filteredItems.length === 0 && search) return;
                 const secEl = document.createElement('div');
                 secEl.innerHTML = `<h3 class="text-xs font-bold text-slate-400 uppercase mb-2 ml-1">${sec.title}</h3><div class="bg-white dark:bg-slate-900 rounded-xl border dark:border-slate-800 overflow-hidden shadow-sm"></div>`;
                 const list = secEl.querySelector('div');
                 sec.items.forEach(item => {
-                    const done = completedIds.includes(item.id);
-                    const dur = parseTimeStr(item.end) - parseTimeStr(item.start);
+                    if(search && !item.title.toLowerCase().includes(search)) return;
+                    const done = completedIds.includes(item.id), dur = parseTimeStr(item.end) - parseTimeStr(item.start);
                     bookTotal += dur; if(done) bookComp += dur;
                     const next = !done && !firstUncompleted; if(next) firstUncompleted = true;
+                    const isFav = favorites.includes(`${currentBookId}_${item.id}`);
                     const itemEl = document.createElement('div');
-                    const videoIdParam = item.videoId ? `'${item.videoId}'` : 'null';
-
-                    itemEl.className = `item-row group flex items-center justify-between p-3 border-b dark:border-slate-800 last:border-0 hover:bg-slate-50 dark:hover:bg-slate-800/50 ${done ? 'bg-slate-50 dark:bg-slate-950/50' : ''} ${next ? 'next-up' : ''}`;
+                    itemEl.className = `item-row group flex items-center justify-between p-3 border-b dark:border-slate-800 last:border-0 hover:bg-slate-50 dark:hover:bg-slate-800/50 ${done ? 'bg-slate-50/50 dark:bg-slate-950/50' : ''} ${next ? 'next-up' : ''}`;
                     itemEl.innerHTML = `<div class="flex items-center gap-3 flex-1 cursor-pointer" onclick="toggleComplete(${item.id}, '${item.title}', '${item.start}', '${item.end}', event)">
                         <button class="check-btn ${done ? 'completed' : ''}"><i data-lucide="circle" class="w-5 h-5 icon-circle"></i><i data-lucide="check-circle" class="w-5 h-5 icon-check"></i></button>
                         <div class="flex-1">
-                            <div class="flex items-center gap-2 mb-0.5"><span class="next-badge text-[9px] font-bold text-amber-600 bg-amber-100 px-1 rounded uppercase">Siguiente</span><p class="text-sm font-medium ${done ? 'line-through text-slate-400 decoration-slate-300' : 'text-slate-800 dark:text-slate-200'} leading-tight">${item.title}</p></div>
+                            <div class="flex items-center gap-2 mb-0.5"><span class="next-badge text-[9px] font-bold text-amber-600 bg-amber-100 px-1 rounded uppercase">Siguiente</span><p class="text-sm font-medium ${done ? 'line-through text-slate-400 decoration-slate-300 font-normal' : 'font-semibold'} leading-tight">${item.title}</p></div>
                             <div class="text-[10px] text-slate-400 font-mono flex gap-2"><i data-lucide="clock" class="w-3 h-3"></i> ${formatDuration(dur)} ${chapterNotes[`${currentBookId}_${item.id}`] ? '• Nota guardada' : ''}</div>
                         </div></div>
-                        <div class="flex items-center gap-1"><button onclick="openNotes(${item.id}, '${item.title}')" class="p-2 text-slate-300 hover:text-amber-500 transition-colors"><i data-lucide="pen-tool" class="w-4 h-4"></i></button><button onclick="openVideo('${item.start}', '${item.end}', ${videoIdParam})" class="p-2 bg-slate-100 dark:bg-slate-800 text-slate-500 rounded-full hover:bg-amber-500 hover:text-white transition-all"><i data-lucide="play" class="w-3 h-3 fill-current ml-0.5"></i></button></div>`;
+                        <div class="flex items-center gap-1">
+                            <button onclick="toggleFavorite(${item.id}, event)" class="p-2 ${isFav ? 'text-amber-500' : 'text-slate-300'}"><i data-lucide="star" class="w-4 h-4 ${isFav ? 'fill-current' : ''}"></i></button>
+                            <button onclick="openNotes(${item.id}, '${item.title}')" class="p-2 text-slate-300 hover:text-amber-500"><i data-lucide="pen-tool" class="w-4 h-4"></i></button>
+                            <button onclick="openVideo('${item.start}', '${item.end}', '${item.videoId||''}')" class="p-2 bg-slate-100 dark:bg-slate-800 text-slate-500 rounded-full hover:bg-amber-500 hover:text-white transition-all"><i data-lucide="play" class="w-3 h-3 fill-current ml-0.5"></i></button>
+                        </div>`;
                     list.appendChild(itemEl);
                 });
-                container.appendChild(secEl);
+                if(list.children.length > 0) container.appendChild(secEl);
             });
-            const pct = bookTotal > 0 ? Math.round((bookComp / bookTotal) * 100) : 0;
-            document.getElementById('book-progress-text').innerText = `${pct}%`;
-            document.getElementById('book-time-text').innerText = `${formatDuration(bookComp)} / ${formatDuration(bookTotal)}`;
+            safeSet('book-progress-text', `${bookTotal > 0 ? Math.round((bookComp / bookTotal) * 100) : 0}%`);
+            safeSet('book-time-text', `${formatDuration(bookComp)} / ${formatDuration(bookTotal)}`);
             updateGlobalProgress(); lucide.createIcons();
-        }
-
-        function renderAllNotes() {
-            const container = document.getElementById('all-notes-container');
-            const keys = Object.keys(chapterNotes);
-            if (keys.length === 0) { container.innerHTML = '<p class="text-slate-400 italic text-center py-10">Aún no has guardado notas en ningún capítulo.</p>'; return; }
-            container.innerHTML = '';
-            const grouped = {};
-            keys.forEach(k => { const [b, s] = k.split('_'); if(!grouped[b]) grouped[b] = []; grouped[b].push({s, t: chapterNotes[k]}); });
-            Object.keys(grouped).forEach(b => {
-                if(!library[b]) return;
-                const el = document.createElement('div'); el.className = 'bg-white dark:bg-slate-900 p-5 rounded-xl border dark:border-slate-800 shadow-sm mb-4';
-                let html = `<h3 class="font-bold border-b pb-2 mb-3 flex items-center gap-2 dark:text-white"><span class="w-3 h-3 rounded-full" style="background-color:${library[b].color}"></span>${library[b].title}</h3>`;
-                grouped[b].forEach(n => {
-                    let cT = "Capítulo"; Object.values(library[b].sections).forEach(s => { const i = s.items.find(x => x.id == n.s); if(i) cT = i.title; });
-                    html += `<div class="mb-3"><h4 class="text-[10px] font-bold text-amber-600 uppercase mb-1">${cT}</h4><p class="text-sm text-slate-600 dark:text-slate-400 italic whitespace-pre-wrap bg-slate-50 dark:bg-slate-950 p-3 rounded-lg border-l-2 border-slate-200 dark:border-slate-800">"${n.t}"</p></div>`;
-                });
-                el.innerHTML = html; container.appendChild(el);
-            });
-            lucide.createIcons();
         }
 
         function renderStats() {
@@ -503,61 +465,94 @@
                 const dKey = new Date(l.timestamp).toISOString().split('T')[0]; actMap[dKey] = (actMap[dKey] || 0) + l.duration;
                 if(l.timestamp >= todayStart) todaySec += l.duration;
             });
-            document.getElementById('stat-today').innerText = todaySec < 60 ? todaySec + 's' : formatDuration(todaySec);
-            document.getElementById('stat-chapters').innerText = listeningHistory.length;
-            document.getElementById('stat-level').innerText = totalSec > 36000 ? "Sabio" : totalSec > 18000 ? "Erudito" : "Novato";
+            safeSet('stat-today', todaySec < 60 ? todaySec + 's' : formatDuration(todaySec));
+            safeSet('stat-chapters', listeningHistory.length);
+            safeSet('stat-level', totalSec > 36000 ? "Sabio" : totalSec > 18000 ? "Erudito" : "Novato");
+            safeSet('stat-total-time', formatDuration(totalSec));
             
             let streak = 0; let check = new Date();
             while(actMap[check.toISOString().split('T')[0]]) { streak++; check.setDate(check.getDate() - 1); }
-            document.getElementById('stat-streak').innerText = streak + " días";
+            safeSet('stat-streak', streak + " días");
 
             const ring = document.getElementById('daily-progress-ring'), pct = Math.min(100, Math.round((todaySec / (dailyGoalMinutes * 60)) * 100));
-            ring.style.strokeDashoffset = 351.86 - (351.86 * pct / 100);
-            document.getElementById('daily-progress-val').innerText = pct + '%';
-            document.getElementById('daily-goal-target').innerText = dailyGoalMinutes + 'm';
+            if(ring) ring.style.strokeDashoffset = 351.86 - (351.86 * pct / 100);
+            safeSet('daily-progress-val', pct + '%');
 
-            const achC = document.getElementById('achievements-container'); achC.innerHTML = '';
-            achievementsList.forEach(a => {
-                const uniqueBooks = new Set(listeningHistory.map(l => l.bookId)).size;
-                const totalHours = totalSec / 3600;
-                let done = false;
-                if(a.id === 'first_step' && listeningHistory.length > 0) done = true;
-                if(a.id === 'streak_3' && streak >= 3) done = true;
-                if(a.id === 'bookworm' && uniqueBooks >= 3) done = true;
-                if(a.id === 'scholar' && totalHours >= 10) done = true;
-                
-                achC.innerHTML += `<div class="flex flex-col items-center p-3 rounded-lg border ${done ? 'bg-amber-50 dark:bg-slate-800 border-amber-200 dark:border-slate-700' : 'bg-slate-50 dark:bg-slate-900 border-slate-100 dark:border-slate-800 opacity-40 grayscale'}"><div class="p-2 rounded-full ${done ? 'bg-white dark:bg-slate-700 text-amber-500' : 'bg-slate-200 dark:bg-slate-800 text-slate-400'} mb-2"><i data-lucide="${a.icon}" class="w-5 h-5"></i></div><span class="text-[10px] font-bold text-slate-700 dark:text-slate-300 text-center">${a.title}</span></div>`;
-            });
-
-            const chart = document.getElementById('weekly-chart'); chart.innerHTML = '';
-            for(let i=6; i>=0; i--) {
-                const d = new Date(); d.setDate(d.getDate() - i); const k = d.toISOString().split('T')[0]; const v = actMap[k] || 0;
-                chart.innerHTML += `<div class="flex-1 flex flex-col justify-end items-center gap-1 h-full"><div class="w-full max-w-[20px] bg-amber-400 dark:bg-amber-600 rounded-t" style="height:${Math.max(5, Math.min(100, (v/3600)*100))}%"></div><span class="text-[8px] uppercase text-slate-400">${d.toLocaleDateString('es',{weekday:'short'}).slice(0,2)}</span></div>`;
+            const chart = document.getElementById('weekly-chart'); if(chart) {
+                chart.innerHTML = '';
+                for(let i=6; i>=0; i--) {
+                    const d = new Date(); d.setDate(d.getDate() - i); const k = d.toISOString().split('T')[0], v = actMap[k] || 0;
+                    chart.innerHTML += `<div class="flex-1 flex flex-col justify-end items-center gap-1 h-full"><div class="w-full max-w-[20px] bg-amber-400 rounded-t" style="height:${Math.min(100, (v/3600)*100)}%"></div><span class="text-[8px] uppercase text-slate-400">${d.toLocaleDateString('es',{weekday:'short'}).slice(0,2)}</span></div>`;
+                }
             }
-
             if(totalSec > 0) {
-                let currentDeg = 0, gradientStr = "";
-                const legendContainer = document.getElementById('distribution-legend');
-                legendContainer.innerHTML = '';
-                Object.keys(bMap).forEach((bId, idx, arr) => {
-                    if (!library[bId]) return;
-                    const pctB = (bMap[bId] / totalSec) * 100;
-                    const deg = (pctB / 100) * 360;
-                    const color = library[bId].color;
-                    gradientStr += `${color} ${currentDeg}deg ${currentDeg + deg}deg${idx < arr.length - 1 ? ', ' : ''}`;
-                    currentDeg += deg;
-                    legendContainer.innerHTML += `<div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full" style="background-color: ${color}"></span><span class="dark:text-slate-300 truncate w-32 font-medium">${library[bId].title} (${Math.round(pctB)}%)</span></div>`;
-                });
-                document.getElementById('distribution-pie').style.background = `conic-gradient(${gradientStr || '#e2e8f0 0% 100%'})`;
+                let currentDeg = 0, gradStr = ""; const legend = document.getElementById('distribution-legend');
+                if(legend) {
+                    legend.innerHTML = '';
+                    Object.keys(bMap).forEach((bId) => {
+                        if (!library[bId]) return;
+                        const pctB = (bMap[bId] / totalSec) * 100; const deg = (pctB / 100) * 360; const color = library[bId].color;
+                        gradStr += `${color} ${currentDeg}deg ${currentDeg + deg}deg, `;
+                        currentDeg += deg;
+                        legend.innerHTML += `<div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full" style="background-color: ${color}"></span><span class="dark:text-slate-300 truncate w-32 font-medium">${library[bId].title} (${Math.round(pctB)}%)</span></div>`;
+                    });
+                    const pie = document.getElementById('distribution-pie'); if(pie) pie.style.background = `conic-gradient(${gradStr.slice(0, -2) || '#e2e8f0 0% 100%'})`;
+                }
             }
             lucide.createIcons();
         }
 
+        function renderHeatmap() {
+            const container = document.getElementById('streak-heatmap'); if(!container) return; container.innerHTML = '';
+            const actMap = {}; listeningHistory.forEach(l => { const k = new Date(l.timestamp).toISOString().split('T')[0]; actMap[k] = (actMap[k] || 0) + l.duration; });
+            for(let i=89; i>=0; i--) {
+                const d = new Date(); d.setDate(d.getDate() - i); const k = d.toISOString().split('T')[0], v = actMap[k] || 0;
+                const cell = document.createElement('div'); cell.className = `heatmap-cell level-${v === 0 ? 0 : v < 900 ? 1 : v < 1800 ? 2 : v < 3600 ? 3 : 4}`;
+                cell.title = `${d.toLocaleDateString('es')}: ${Math.round(v/60)} min`;
+                container.appendChild(cell);
+            }
+        }
+
+        function togglePomodoro() {
+            pomoActive = !pomoActive; const btn = document.getElementById('pomo-btn');
+            if(pomoActive) {
+                btn.innerHTML = '<i data-lucide="square" class="w-4 h-4"></i>';
+                pomoInterval = setInterval(() => {
+                    pomoTime--;
+                    if(pomoTime <= 0) { clearInterval(pomoInterval); alert("Sesión terminada"); pomoActive = false; pomoTime = 1500; }
+                    const m = Math.floor(pomoTime/60), s = pomoTime%60;
+                    safeSet('pomo-timer', `${m}:${s < 10 ? '0' : ''}${s}`);
+                }, 1000);
+            } else { btn.innerHTML = '<i data-lucide="play" class="w-4 h-4"></i>'; clearInterval(pomoInterval); }
+            lucide.createIcons();
+        }
+
+        function renderAllNotes(onlyFavs = false) {
+            const container = document.getElementById('all-notes-container'); if(!container) return; container.innerHTML = '';
+            const grouped = {};
+            Object.keys(chapterNotes).forEach(k => { 
+                const [b, s] = k.split('_'); if(onlyFavs && !favorites.includes(k)) return;
+                if(!grouped[b]) grouped[b] = []; grouped[b].push({s, t: chapterNotes[k], isFav: favorites.includes(k)}); 
+            });
+            if(Object.keys(grouped).length === 0) { container.innerHTML = '<p class="text-slate-400 italic text-center py-10">Nada que mostrar aquí.</p>'; return; }
+            Object.keys(grouped).forEach(b => {
+                if(!library[b]) return;
+                const el = document.createElement('div'); el.className = 'bg-white dark:bg-slate-900 p-5 rounded-xl border dark:border-slate-800 mb-4 shadow-sm';
+                let html = `<h3 class="font-bold border-b pb-2 mb-3 flex items-center gap-2 dark:text-white"><span class="w-3 h-3 rounded-full" style="background-color:${library[b].color}"></span>${library[b].title}</h3>`;
+                grouped[b].forEach(n => {
+                    let cT = "Capítulo"; Object.values(library[b].sections).forEach(s => { const i = s.items.find(x => x.id == n.s); if(i) cT = i.title; });
+                    html += `<div class="mb-4 last:mb-0"><div class="flex items-center gap-2 mb-1"><h4 class="text-[10px] font-bold text-amber-600 uppercase">${cT}</h4>${n.isFav ? '<i data-lucide="star" class="w-3 h-3 text-amber-500 fill-current"></i>' : ''}</div><p class="text-sm text-slate-600 dark:text-slate-400 italic whitespace-pre-wrap bg-slate-50 dark:bg-slate-950 p-3 rounded-lg border-l-2 border-slate-200 dark:border-slate-800">"${n.t}"</p></div>`;
+                });
+                el.innerHTML = html; container.appendChild(el);
+            });
+            lucide.createIcons();
+        }
+
         function renderActionPlan() {
-            const list = document.getElementById('action-plan-list'); list.innerHTML = actionPlan.length ? '' : '<p class="text-xs text-slate-400 italic">No hay hábitos en tu plan todavía.</p>';
+            const list = document.getElementById('action-plan-list'); if(!list) return; list.innerHTML = actionPlan.length ? '' : '<p class="text-xs text-slate-400 italic">No hay hábitos en tu plan todavía.</p>';
             actionPlan.forEach((it, i) => {
                 const el = document.createElement('div'); el.className = 'flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-950 rounded-lg border dark:border-slate-800';
-                el.innerHTML = `<div class="flex gap-3 items-center"><input type="checkbox" ${it.done?'checked':''} onchange="toggleAction(${i})" class="w-4 h-4 rounded text-amber-500 accent-amber-500"><span class="text-sm ${it.done?'line-through opacity-50 dark:text-slate-500':'text-slate-700 dark:text-slate-300'}">${it.text}</span></div><button onclick="removeAction(${i})" class="text-slate-300 hover:text-red-500 transition-colors"><i data-lucide="trash-2" class="w-4 h-4"></i></button>`;
+                el.innerHTML = `<div class="flex gap-3 items-center"><input type="checkbox" ${it.done?'checked':''} onchange="toggleAction(${i})" class="accent-amber-500"><span class="text-sm ${it.done?'line-through opacity-50 dark:text-slate-500 text-slate-400 font-normal':'text-slate-700 dark:text-slate-300 font-bold'}">${it.text}</span></div><button onclick="removeAction(${i})" class="text-slate-300 hover:text-red-500 transition-colors"><i data-lucide="trash-2" class="w-4 h-4"></i></button>`;
                 list.appendChild(el);
             });
             lucide.createIcons();
@@ -566,8 +561,66 @@
         function addActionItem() { const input = document.getElementById('new-action-input'); if(!input.value.trim()) return; actionPlan.push({text: input.value, done: false}); localStorage.setItem('actionPlan', JSON.stringify(actionPlan)); input.value = ''; renderActionPlan(); }
         function toggleAction(i) { actionPlan[i].done = !actionPlan[i].done; localStorage.setItem('actionPlan', JSON.stringify(actionPlan)); renderActionPlan(); if(actionPlan[i].done) triggerConfetti(); }
         function removeAction(i) { actionPlan.splice(i, 1); localStorage.setItem('actionPlan', JSON.stringify(actionPlan)); renderActionPlan(); }
+        
+        function resetCurrentBook() { 
+            if(confirm("¿Borrar todo el progreso de este audiolibro? Todos los marcadores visuales serán eliminados.")) {
+                listeningHistory = listeningHistory.filter(l => l.bookId !== currentBookId);
+                localStorage.setItem('listeningHistory', JSON.stringify(listeningHistory));
+                renderLibraryList();
+                updateGlobalProgress();
+                alert("Progreso del libro reiniciado.");
+            }
+        }
 
-        function exportData() { const d = {history: listeningHistory, notes: chapterNotes, plan: actionPlan, goal: dailyGoalMinutes}; const blob = new Blob([JSON.stringify(d)], {type: 'application/json'}); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'backup_mi_progreso.json'; a.click(); }
+        function parseTimeStr(t) { const p = t.split(':').map(Number); return p.length === 3 ? p[0]*3600 + p[1]*60 + p[2] : p[0]*60 + p[1]; }
+        function formatDuration(s) { const h = Math.floor(s/3600), m = Math.floor((s%3600)/60); return h > 0 ? `${h}h ${m}m` : `${m} min`; }
+        function loadRandomQuote() { const q = library[currentBookId].quotes; safeSet('quote-text', `"${q[Math.floor(Math.random()*q.length)]}"`); safeSet('quote-author', `— ${library[currentBookId].author}`); }
+        function toggleDarkMode() { document.documentElement.classList.toggle('dark'); localStorage.setItem('theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light'); }
+        function triggerConfetti() { confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } }); }
+        
+        function openVideo(s, e, v) { 
+            const start = parseTimeStr(s), end = parseTimeStr(e), id = v || library[currentBookId].videoId; 
+            document.getElementById('youtube-iframe').src = `https://www.youtube.com/embed/${id}?start=${start}&end=${end}&autoplay=1&rel=0`; 
+            document.getElementById('video-modal').classList.remove('hidden'); 
+            startCountdown(end - start);
+        }
+
+        function startCountdown(seconds) {
+            if(countdownInterval) clearInterval(countdownInterval);
+            let timeRemaining = seconds;
+            updateCountdownUI(timeRemaining);
+            countdownInterval = setInterval(() => {
+                timeRemaining--;
+                if(timeRemaining <= 0) { clearInterval(countdownInterval); closeVideo(); }
+                updateCountdownUI(timeRemaining);
+            }, 1000);
+        }
+
+        function updateCountdownUI(sec) {
+            const m = Math.floor(sec/60), s = sec%60;
+            const text = `${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`;
+            const el = document.getElementById('playback-countdown');
+            if(el) el.innerText = text;
+        }
+
+        function closeVideo() { 
+            document.getElementById('youtube-iframe').src = ""; 
+            document.getElementById('video-modal').classList.add('hidden'); 
+            if(countdownInterval) clearInterval(countdownInterval);
+        }
+
+        function openNotes(id, title) { activeNoteId = `${currentBookId}_${id}`; safeSet('note-chapter-title', title); document.getElementById('note-textarea').value = chapterNotes[activeNoteId] || ""; document.getElementById('notes-modal').classList.remove('hidden'); }
+        function saveNote() { const v = document.getElementById('note-textarea').value; if(v.trim()) chapterNotes[activeNoteId] = v; else delete chapterNotes[activeNoteId]; localStorage.setItem('chapterNotes', JSON.stringify(chapterNotes)); closeNotes(); renderLibraryList(); }
+        function closeNotes() { document.getElementById('notes-modal').classList.add('hidden'); activeNoteId = null; }
+        function showStats() { switchView('stats'); }
+        function adjustDailyGoal(a) { dailyGoalMinutes = Math.max(5, dailyGoalMinutes + a); localStorage.setItem('dailyGoalMinutes', dailyGoalMinutes); renderStats(); }
+        
+        function updateGlobalProgress() { 
+            let total = 0; Object.values(library).forEach(b => b.sections.forEach(s => total += s.items.length));
+            const bar = document.getElementById('global-progress-bar'); if(bar) bar.style.width = (Math.round((listeningHistory.length / total) * 100) || 0) + '%';
+        }
+
+        function exportData() { const d = {history: listeningHistory, notes: chapterNotes, plan: actionPlan, favs: favorites, goal: dailyGoalMinutes}; const blob = new Blob([JSON.stringify(d)], {type: 'application/json'}); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'audiolibro_progreso.json'; a.click(); }
         function triggerImport() { document.getElementById('import-file').click(); }
         function handleFileImport(e) {
             const file = e.target.files[0]; if(!file) return;
@@ -577,34 +630,16 @@
                     if(imp.history) listeningHistory = [...new Map([...listeningHistory, ...imp.history].map(i => [i.bookId+i.sectionId, i])).values()];
                     if(imp.notes) Object.assign(chapterNotes, imp.notes);
                     if(imp.plan) actionPlan = imp.plan;
-                    localStorage.setItem('listeningHistory', JSON.stringify(listeningHistory)); localStorage.setItem('chapterNotes', JSON.stringify(chapterNotes)); localStorage.setItem('actionPlan', JSON.stringify(actionPlan));
+                    if(imp.favs) favorites = imp.favs;
+                    localStorage.setItem('listeningHistory', JSON.stringify(listeningHistory)); localStorage.setItem('chapterNotes', JSON.stringify(chapterNotes)); localStorage.setItem('actionPlan', JSON.stringify(actionPlan)); localStorage.setItem('favorites', JSON.stringify(favorites));
                     switchBook(currentBookId); alert("Importación exitosa."); triggerConfetti();
                 } catch(err) { alert("Archivo inválido."); }
             }; reader.readAsText(file);
         }
 
-        function parseTimeStr(t) { const p = t.split(':').map(Number); return p.length === 3 ? p[0]*3600 + p[1]*60 + p[2] : p[0]*60 + p[1]; }
-        function formatDuration(s) { const h = Math.floor(s/3600), m = Math.floor((s%3600)/60); return h > 0 ? `${h}h ${m}m` : `${m} min`; }
-        function loadRandomQuote() { const q = library[currentBookId].quotes; document.getElementById('quote-text').innerText = `"${q[Math.floor(Math.random()*q.length)]}"`; document.getElementById('quote-author').innerText = `— ${library[currentBookId].author}`; }
-        function resetCurrentBook() { if(confirm("¿Borrar progreso de este libro?")) { listeningHistory = listeningHistory.filter(l => l.bookId !== currentBookId); localStorage.setItem('listeningHistory', JSON.stringify(listeningHistory)); renderLibraryList(); } }
-        function toggleDarkMode() { document.documentElement.classList.toggle('dark'); localStorage.setItem('theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light'); }
-        function triggerConfetti() { confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } }); }
-        function openVideo(s, e, v) { const start = parseTimeStr(s), end = parseTimeStr(e), id = v || library[currentBookId].videoId; document.getElementById('youtube-iframe').src = `https://www.youtube.com/embed/${id}?start=${start}&end=${end}&autoplay=1&rel=0`; document.getElementById('video-modal').classList.remove('hidden'); }
-        function closeVideo() { document.getElementById('youtube-iframe').src = ""; document.getElementById('video-modal').classList.add('hidden'); }
-        function openNotes(id, title) { activeNoteId = `${currentBookId}_${id}`; document.getElementById('note-chapter-title').innerText = title; document.getElementById('note-textarea').value = chapterNotes[activeNoteId] || ""; document.getElementById('notes-modal').classList.remove('hidden'); }
-        function saveNote() { const v = document.getElementById('note-textarea').value; if(v.trim()) chapterNotes[activeNoteId] = v; else delete chapterNotes[activeNoteId]; localStorage.setItem('chapterNotes', JSON.stringify(chapterNotes)); closeNotes(); renderLibraryList(); }
-        function closeNotes() { document.getElementById('notes-modal').classList.add('hidden'); activeNoteId = null; }
-        function showStats() { switchView('stats'); }
-        function adjustDailyGoal(a) { dailyGoalMinutes = Math.max(5, dailyGoalMinutes + a); localStorage.setItem('dailyGoalMinutes', dailyGoalMinutes); renderStats(); }
-        function updateGlobalProgress() { 
-            let total = 0; Object.values(library).forEach(b => b.sections.forEach(s => total += s.items.length));
-            document.getElementById('global-progress-bar').style.width = (Math.round((listeningHistory.length / total) * 100) || 0) + '%';
-        }
-
         document.addEventListener('DOMContentLoaded', () => {
             if(localStorage.getItem('theme') === 'dark') document.documentElement.classList.add('dark');
-            const stored = localStorage.getItem('activeBookId');
-            if(stored && library[stored]) currentBookId = stored;
+            const stored = localStorage.getItem('activeBookId'); if(stored && library[stored]) currentBookId = stored;
             switchBook(currentBookId);
         });
     </script>
