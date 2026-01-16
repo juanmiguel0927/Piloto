@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Audiolibros - Seguimiento y Acción</title>
+    <title>Audiolibro - Seguimiento y Acción</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -881,8 +881,9 @@
                 rem--; 
                 if(rem <= 0) { 
                     clearInterval(countdownInterval); 
+                    const playbackData = activePlayback; // Guardar datos antes de que se borren
                     closeVideo(); 
-                    autoComplete(activePlayback); // Trigger auto-complete
+                    autoComplete(playbackData); // Trigger auto-complete con los datos guardados
                 } 
                 updateCountdownUI(rem); 
             }, 1000);
