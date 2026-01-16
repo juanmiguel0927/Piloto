@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Audiolibro - Seguimiento y Acción</title>
+    <title>Audiolibros - Seguimiento y Acción</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -55,17 +55,13 @@
         .scrollbar-hide::-webkit-scrollbar { display: none; }
         .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
 
-        .chart-bar { transition: height 1s ease-out; }
-        .pie-chart { background: conic-gradient(var(--pie-gradient)); border-radius: 50%; }
-
-        .heatmap-cell { width: 10px; height: 10px; border-radius: 2px; }
-        @media (min-width: 640px) { .heatmap-cell { width: 12px; height: 12px; } }
-        .level-0 { background-color: #e2e8f0; }
-        .dark .level-0 { background-color: #1e293b; }
-        .level-1 { background-color: #fde68a; }
-        .level-2 { background-color: #fbbf24; }
-        .level-3 { background-color: #f59e0b; }
-        .level-4 { background-color: #b45309; }
+        /* Estilos para el nuevo Heatmap de Calendario */
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+        .calendar-day { width: 100%; aspect-ratio: 1; border-radius: 2px; }
+        
+        /* Estilos para el gráfico de barras simple */
+        .bar-container { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; gap: 4px; height: 100%; }
+        .bar-fill { width: 100%; max-width: 24px; border-radius: 4px 4px 0 0; transition: height 0.5s ease; min-height: 4px; }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800 font-sans pb-12 transition-colors duration-300 dark:bg-slate-950 dark:text-slate-200">
@@ -85,11 +81,11 @@
                     </button>
                 </div>
 
-                <div class="flex items-center gap-2 text-sm">
-                    <div id="pomodoro-widget" class="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-lg border dark:border-slate-700 shadow-sm">
-                        <i data-lucide="timer" class="w-4 h-4 text-amber-500"></i>
-                        <span id="pomo-timer" class="font-mono font-bold w-12 text-center text-slate-700 dark:text-slate-300">25:00</span>
-                        <button onclick="togglePomodoro()" id="pomo-btn" class="hover:text-amber-600 transition-colors"><i data-lucide="play" class="w-4 h-4"></i></button>
+                <!-- Widget de Frases Aleatorias con Autor -->
+                <div class="flex-1 hidden md:flex justify-end max-w-lg">
+                    <div id="quote-widget" class="flex items-center gap-3 bg-slate-50 dark:bg-slate-800/50 px-4 py-2 rounded-lg border border-slate-100 dark:border-slate-800 shadow-sm min-h-[42px]">
+                        <i data-lucide="quote" class="w-4 h-4 text-amber-500 shrink-0"></i>
+                        <p id="header-quote-text" class="text-xs font-medium italic text-slate-600 dark:text-slate-400 transition-opacity duration-300"></p>
                     </div>
                 </div>
             </div>
@@ -196,13 +192,24 @@
             <div id="all-notes-container" class="space-y-4 pb-8"></div>
         </div>
 
-        <!-- VISTA: ESTADÍSTICAS -->
+        <!-- VISTA: ESTADÍSTICAS MEJORADA -->
         <div id="view-stats" class="hidden fade-in space-y-8">
-            <div class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm text-center">
-                <h3 class="text-sm font-bold text-slate-700 dark:text-slate-300 mb-4 flex items-center gap-2 justify-center uppercase tracking-widest">
-                    <i data-lucide="calendar-check" class="w-4 h-4 text-green-500"></i> Historial de Consistencia
-                </h3>
-                <div id="streak-heatmap" class="flex flex-wrap gap-1 justify-center"></div>
+            <!-- Balance de Utilización (Gráfico Filtrable) -->
+             <div class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-sm font-bold text-slate-700 dark:text-slate-300 flex items-center gap-2 uppercase tracking-widest">
+                        <i data-lucide="bar-chart-2" class="w-4 h-4 text-blue-500"></i> Balance de Utilización
+                    </h3>
+                    <div class="flex gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-lg">
+                        <button onclick="updateChartFilter('week')" id="filter-week" class="filter-btn text-[10px] font-bold px-3 py-1.5 rounded-md transition-all">7 Días</button>
+                        <button onclick="updateChartFilter('month')" id="filter-month" class="filter-btn text-[10px] font-bold px-3 py-1.5 rounded-md transition-all">Mes</button>
+                        <button onclick="updateChartFilter('year')" id="filter-year" class="filter-btn text-[10px] font-bold px-3 py-1.5 rounded-md transition-all">Año</button>
+                    </div>
+                </div>
+                <!-- Gráfico CSS Simple -->
+                <div id="stats-chart-container" class="h-40 w-full flex items-end justify-between gap-2 px-2 pb-4">
+                    <!-- Las barras se inyectan aquí -->
+                </div>
             </div>
 
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
@@ -221,6 +228,26 @@
                 <div class="bg-white dark:bg-slate-900 p-4 rounded-xl border dark:border-slate-800 shadow-sm">
                     <p class="text-[10px] font-bold text-slate-400 uppercase mb-1">Nivel</p>
                     <p id="stat-level" class="text-lg font-black text-amber-500">Novato</p>
+                </div>
+            </div>
+
+            <!-- Heatmap Atractivo (Calendario) -->
+            <div class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm text-center">
+                <h3 class="text-sm font-bold text-slate-700 dark:text-slate-300 mb-6 flex items-center gap-2 justify-center uppercase tracking-widest">
+                    <i data-lucide="calendar-check" class="w-4 h-4 text-green-500"></i> Mapa de Constancia
+                </h3>
+                <div id="streak-heatmap" class="flex flex-wrap gap-6 justify-center"></div>
+            </div>
+
+            <!-- Historial Detallado por Mes -->
+            <div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+                <div class="p-4 bg-slate-50 dark:bg-slate-850 border-b border-slate-100 dark:border-slate-800">
+                     <h3 class="text-sm font-bold text-slate-700 dark:text-slate-300 flex items-center gap-2 uppercase tracking-widest">
+                        <i data-lucide="history" class="w-4 h-4 text-slate-400"></i> Historial de Actividad
+                    </h3>
+                </div>
+                <div id="detailed-history-list" class="divide-y divide-slate-100 dark:divide-slate-800 max-h-96 overflow-y-auto">
+                    <!-- Items del historial -->
                 </div>
             </div>
             
@@ -265,7 +292,7 @@
                 author: "James Clear", 
                 color: "#ef4444", 
                 videoId: "CgGiyfv7Xpc", 
-                quotes: ["No te elevas al nivel de tus metas. Caes al nivel de tus sistemas.", "Los hábitos son el interés compuesto de la superación personal."], 
+                quotes: ["No te elevas al nivel de tus metas. Caes al nivel de tus sistemas.", "Los hábitos son el interés compuesto de la superación personal.", "Cada acción que realizas es un voto por el tipo de persona en la que deseas convertirte.", "Si quieres mejores resultados, olvida las metas. Concéntrate en tu sistema."], 
                 sections: [
                     { title: "Introducción y Fundamentos", items: [
                         { id: 0, title: "Introducción: Mi historia", start: "00:00:00", end: "00:26:50" },
@@ -308,7 +335,7 @@
                 author: "Marian Rojas Estapé", 
                 color: "#3b82f6", 
                 videoId: "UiedpTbutXg", 
-                quotes: ["La felicidad no se define, se experimenta.", "Comprender es aliviar."], 
+                quotes: ["La felicidad no se define, se experimenta.", "Comprender es aliviar.", "Tu mente no distingue lo real de lo imaginario.", "El sufrimiento es la distancia entre lo que aceptamos y lo que deseamos."], 
                 sections: [
                     { title: "Mente y Cuerpo", items: [
                         { id: 100, title: "Introducción", start: "00:00:00", end: "00:11:59" },
@@ -329,7 +356,7 @@
                 author: "Stephen Covey", 
                 color: "#10b981", 
                 videoId: "SXaY1Bz8Ndk", 
-                quotes: ["La victoria privada precede a la victoria pública.", "Busca primero entender."], 
+                quotes: ["La victoria privada precede a la victoria pública.", "Busca primero entender.", "Para cambiar la situación, debemos cambiarnos a nosotros mismos.", "La proactividad no significa solo tomar la iniciativa, sino asumir la responsabilidad de hacer que las cosas sucedan."], 
                 sections: [
                     { title: "Parte 1: Victoria Privada", items: [
                         { id: 200, title: "Introducción: Paradigmas y Principios", start: "00:00:22", end: "00:23:24" },
@@ -356,7 +383,7 @@
                 author: "Marian Rojas Estapé", 
                 color: "#ec4899", 
                 videoId: "26Atrg0YyVE", 
-                quotes: ["Tus relaciones determinan tu salud.", "Abrazar libera oxitocina."], 
+                quotes: ["Tus relaciones determinan tu salud.", "Abrazar libera oxitocina.", "Somos lo que protegemos.", "La oxitocina es el pegamento de la vida."], 
                 sections: [
                     { title: "Oxitocina y Vínculos", items: [
                         { id: 300, title: "Introducción", start: "00:00:00", end: "00:07:34" },
@@ -392,10 +419,10 @@
             },
             pensarDemasiado: { 
                 title: "Cómo dejar de pensar demasiado", 
-                author: "Audiolibro Completo", 
+                author: "Gilmer Contreras Berrospi", 
                 color: "#8b5cf6", 
                 videoId: "AtOez0u6PvY", 
-                quotes: ["El sobrepensar es un ladrón de la tranquilidad.", "La paz mental es un derecho."], 
+                quotes: ["El sobrepensar es un ladrón de la tranquilidad.", "La paz mental es un derecho.", "No eres tus pensamientos.", "Deja ir lo que no puedes controlar."], 
                 sections: [
                     { title: "Parte 1: Causas", items: [
                         { id: 500, title: "Introducción: Calma en un mundo ruidoso", start: "00:00:04", end: "00:03:16" },
@@ -447,8 +474,9 @@
         let actionPlan = JSON.parse(localStorage.getItem('actionPlan')) || [];
         let dailyGoalMinutes = parseInt(localStorage.getItem('dailyGoalMinutes')) || 30;
         let activeNoteId = null;
-        let pomoInterval = null, pomoTime = 1500, pomoActive = false;
+        let activeChartFilter = 'week';
         let countdownInterval = null;
+        let activePlayback = null; // Para seguimiento automático
 
         function safeSet(id, text) { const el = document.getElementById(id); if (el) el.innerText = text; }
 
@@ -463,7 +491,10 @@
             const tEl = document.getElementById(`tab-${viewName}`);
             if(vEl) vEl.classList.remove('hidden');
             if(tEl) tEl.classList.add('active');
-            if(viewName === 'stats') { renderStats(); renderHeatmap(); }
+            
+            updateQuoteWidget(); // Actualizar frase al cambiar pestaña
+            
+            if(viewName === 'stats') { renderStats(); renderHeatmap(); renderChart(activeChartFilter); renderHistoryLog(); }
             if(viewName === 'notes') renderAllNotes();
             if(viewName === 'library') { renderLibraryList(); renderActionPlan(); }
         }
@@ -480,7 +511,24 @@
             safeSet('book-title-display', library[bookId].title);
             const authorEl = document.getElementById('book-author-display')?.querySelector('span');
             if(authorEl) authorEl.innerText = library[bookId].author;
-            loadRandomQuote(); renderLibraryList();
+            
+            updateQuoteWidget(); // Actualizar frase al cambiar libro
+            renderLibraryList();
+        }
+
+        function updateQuoteWidget() {
+            const book = library[currentBookId];
+            const quotes = book.quotes;
+            const randomQuote = quotes[Math.floor(Math.random() * quotes.length)];
+            const el = document.getElementById('header-quote-text');
+            if(el) {
+                el.style.opacity = '0';
+                setTimeout(() => {
+                    // Cambio: Agregamos el autor a la frase
+                    el.innerText = `"${randomQuote}" — ${book.author}`;
+                    el.style.opacity = '1';
+                }, 300);
+            }
         }
 
         function toggleComplete(id, title, start, end, e) {
@@ -491,6 +539,26 @@
             else { listeningHistory.push({ timestamp: Date.now(), duration: dur, bookId: currentBookId, sectionId: id, title: title }); triggerConfetti(); }
             localStorage.setItem('listeningHistory', JSON.stringify(listeningHistory));
             renderLibraryList(); updateGlobalProgress();
+        }
+
+        // Función para autocompletar sin interacción
+        function autoComplete(data) {
+            if (!data) return;
+            const { id, title, start, end } = data;
+            const isAlreadyDone = listeningHistory.some(l => l.sectionId === id && l.bookId === currentBookId);
+            if (!isAlreadyDone) {
+                const dur = parseTimeStr(end) - parseTimeStr(start);
+                listeningHistory.push({ timestamp: Date.now(), duration: dur, bookId: currentBookId, sectionId: id, title: title });
+                localStorage.setItem('listeningHistory', JSON.stringify(listeningHistory));
+                renderLibraryList(); updateGlobalProgress();
+                triggerConfetti();
+                // Notificación visual opcional
+                const notif = document.createElement('div');
+                notif.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded shadow-lg text-sm font-bold fade-in z-50';
+                notif.innerText = '¡Capítulo completado!';
+                document.body.appendChild(notif);
+                setTimeout(() => notif.remove(), 3000);
+            }
         }
 
         function toggleFavorite(id, e) {
@@ -521,6 +589,7 @@
                     const isFav = favorites.includes(`${currentBookId}_${item.id}`);
                     const itemEl = document.createElement('div');
                     itemEl.className = `item-row group flex items-center justify-between p-3 border-b dark:border-slate-800 last:border-0 hover:bg-slate-50 dark:hover:bg-slate-800/50 ${done ? 'bg-slate-50/50 dark:bg-slate-950/50' : ''} ${next ? 'next-up' : ''}`;
+                    // Pasamos ID y Titulo a openVideo
                     itemEl.innerHTML = `<div class="flex items-center gap-3 flex-1 cursor-pointer" onclick="toggleComplete(${item.id}, '${item.title}', '${item.start}', '${item.end}', event)">
                         <button class="check-btn ${done ? 'completed' : ''}"><i data-lucide="circle" class="w-5 h-5 icon-circle"></i><i data-lucide="check-circle" class="w-5 h-5 icon-check"></i></button>
                         <div class="flex-1">
@@ -530,7 +599,7 @@
                         <div class="flex items-center gap-1">
                             <button onclick="toggleFavorite(${item.id}, event)" class="p-2 ${isFav ? 'text-amber-500' : 'text-slate-300'}"><i data-lucide="star" class="w-4 h-4 ${isFav ? 'fill-current' : ''}"></i></button>
                             <button onclick="openNotes(${item.id}, '${item.title}')" class="p-2 text-slate-300 hover:text-amber-500 transition-colors"><i data-lucide="pen-tool" class="w-4 h-4"></i></button>
-                            <button onclick="openVideo('${item.start}', '${item.end}', '${item.videoId||''}')" class="p-2 bg-slate-100 dark:bg-slate-800 text-slate-500 rounded-full hover:bg-amber-500 hover:text-white transition-all"><i data-lucide="play" class="w-3 h-3 fill-current ml-0.5"></i></button>
+                            <button onclick="openVideo(${item.id}, '${item.title}', '${item.start}', '${item.end}', '${item.videoId||''}')" class="p-2 bg-slate-100 dark:bg-slate-800 text-slate-500 rounded-full hover:bg-amber-500 hover:text-white transition-all"><i data-lucide="play" class="w-3 h-3 fill-current ml-0.5"></i></button>
                         </div>`;
                     list.appendChild(itemEl);
                 });
@@ -545,58 +614,200 @@
 
         function renderStats() {
             const todayStart = new Date().setHours(0,0,0,0);
-            let todaySec = 0, totalSec = 0; const actMap = {}, bMap = {};
+            let todaySec = 0, totalSec = 0; const actMap = {};
             listeningHistory.forEach(l => {
-                totalSec += l.duration || 0; if(!bMap[l.bookId]) bMap[l.bookId] = 0; bMap[l.bookId] += l.duration;
+                totalSec += l.duration || 0;
                 const dK = new Date(l.timestamp).toISOString().split('T')[0]; actMap[dK] = (actMap[dK] || 0) + l.duration;
                 if(l.timestamp >= todayStart) todaySec += l.duration;
             });
             safeSet('stat-today', todaySec < 60 ? todaySec + 's' : formatDuration(todaySec));
-            safeSet('stat-chapters', listeningHistory.length);
             safeSet('stat-total-time', formatDuration(totalSec));
             safeSet('stat-level', totalSec > 36000 ? "Sabio" : totalSec > 18000 ? "Erudito" : "Novato");
             
             let streak = 0; let check = new Date();
             while(actMap[check.toISOString().split('T')[0]]) { streak++; check.setDate(check.getDate() - 1); }
             safeSet('stat-streak', streak + " d");
+            
+            lucide.createIcons();
+        }
 
-            const ring = document.getElementById('daily-progress-ring'), pct = Math.min(100, Math.round((todaySec / (dailyGoalMinutes * 60)) * 100));
-            if(ring) ring.style.strokeDashoffset = 351.86 - (351.86 * pct / 100);
-            safeSet('daily-progress-val', pct + '%');
+        function updateChartFilter(filter) {
+            activeChartFilter = filter;
+            document.querySelectorAll('.filter-btn').forEach(b => {
+                b.classList.remove('bg-amber-500', 'text-white');
+                b.classList.add('text-slate-500');
+            });
+            const btn = document.getElementById(`filter-${filter}`);
+            if(btn) { btn.classList.remove('text-slate-500'); btn.classList.add('bg-amber-500', 'text-white'); }
+            renderChart(filter);
+        }
 
-            const chart = document.getElementById('weekly-chart'); if(chart) {
-                chart.innerHTML = '';
+        function renderChart(filter) {
+            const container = document.getElementById('stats-chart-container');
+            if(!container) return; container.innerHTML = '';
+            
+            const data = [];
+            const now = new Date();
+            
+            // Lógica de filtrado
+            if (filter === 'week') {
                 for(let i=6; i>=0; i--) {
-                    const d = new Date(); d.setDate(d.getDate() - i); const k = d.toISOString().split('T')[0], v = actMap[k] || 0;
-                    chart.innerHTML += `<div class="flex-1 flex flex-col justify-end items-center gap-1 h-full"><div class="w-full max-w-[20px] bg-amber-400 rounded-t shadow-sm" style="height:${Math.min(100, (v/3600)*100)}%"></div><span class="text-[8px] uppercase text-slate-400">${d.toLocaleDateString('es',{weekday:'short'}).slice(0,2)}</span></div>`;
+                    const d = new Date(now); d.setDate(d.getDate() - i);
+                    const k = d.toISOString().split('T')[0];
+                    const val = listeningHistory.filter(l => new Date(l.timestamp).toISOString().split('T')[0] === k).reduce((acc, curr) => acc + curr.duration, 0);
+                    data.push({ label: d.toLocaleDateString('es', {weekday:'short'}).slice(0,2), value: val });
+                }
+            } else if (filter === 'month') {
+                // Últimos 30 días, agrupados cada 3 días para que quepan
+                 for(let i=29; i>=0; i-=3) {
+                     let groupVal = 0;
+                     const labelDate = new Date(now); labelDate.setDate(labelDate.getDate() - i);
+                     for(let j=0; j<3; j++) {
+                         const d = new Date(now); d.setDate(d.getDate() - (i-j));
+                         const k = d.toISOString().split('T')[0];
+                         groupVal += listeningHistory.filter(l => new Date(l.timestamp).toISOString().split('T')[0] === k).reduce((acc, curr) => acc + curr.duration, 0);
+                     }
+                    data.push({ label: labelDate.getDate(), value: groupVal });
+                }
+            } else if (filter === 'year') {
+                for(let i=11; i>=0; i--) {
+                    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+                    const val = listeningHistory.filter(l => {
+                        const lDate = new Date(l.timestamp);
+                        return lDate.getMonth() === d.getMonth() && lDate.getFullYear() === d.getFullYear();
+                    }).reduce((acc, curr) => acc + curr.duration, 0);
+                    data.push({ label: d.toLocaleDateString('es', {month:'narrow'}), value: val });
                 }
             }
-            lucide.createIcons();
+
+            const maxVal = Math.max(...data.map(d => d.value), 60); // Min 1 min para escala
+            
+            data.forEach(d => {
+                const heightPct = Math.max(5, (d.value / maxVal) * 100);
+                const barHtml = `
+                    <div class="bar-container w-full">
+                        <div class="bar-fill ${d.value > 0 ? 'bg-amber-400' : 'bg-slate-200 dark:bg-slate-800'}" style="height: ${heightPct}%;" title="${formatDuration(d.value)}"></div>
+                        <span class="text-[9px] uppercase text-slate-400 font-bold">${d.label}</span>
+                    </div>
+                `;
+                container.innerHTML += barHtml;
+            });
         }
 
-        function renderHeatmap() {
-            const container = document.getElementById('streak-heatmap'); if(!container) return; container.innerHTML = '';
-            const actMap = {}; listeningHistory.forEach(l => { const k = new Date(l.timestamp).toISOString().split('T')[0]; actMap[k] = (actMap[k] || 0) + l.duration; });
-            for(let i=89; i>=0; i--) {
-                const d = new Date(); d.setDate(d.getDate() - i); const k = d.toISOString().split('T')[0], v = actMap[k] || 0;
-                const cell = document.createElement('div'); cell.className = `heatmap-cell level-${v === 0 ? 0 : v < 900 ? 1 : v < 1800 ? 2 : v < 3600 ? 3 : 4}`;
-                cell.title = `${d.toLocaleDateString('es')}: ${Math.round(v/60)} min`;
-                container.appendChild(cell);
+        function renderHistoryLog() {
+            const container = document.getElementById('detailed-history-list');
+            if(!container) return; container.innerHTML = '';
+            
+            if(listeningHistory.length === 0) {
+                container.innerHTML = '<p class="text-xs text-slate-400 text-center py-6 italic">No hay historial aún.</p>';
+                return;
             }
+
+            // Agrupar por Mes/Año
+            const grouped = {};
+            const sortedHistory = [...listeningHistory].sort((a,b) => b.timestamp - a.timestamp);
+            
+            sortedHistory.forEach(h => {
+                const date = new Date(h.timestamp);
+                const monthKey = date.toLocaleDateString('es', { month: 'long', year: 'numeric' });
+                if(!grouped[monthKey]) grouped[monthKey] = [];
+                grouped[monthKey].push(h);
+            });
+
+            Object.keys(grouped).forEach(key => {
+                const monthDiv = document.createElement('div');
+                const monthHeader = `<div class="bg-slate-100 dark:bg-slate-900 px-4 py-2 text-[10px] font-black uppercase text-slate-500 tracking-wider sticky top-0">${key}</div>`;
+                let itemsHtml = '';
+                grouped[key].forEach(item => {
+                    const d = new Date(item.timestamp);
+                    const day = d.getDate();
+                    const bookName = library[item.bookId] ? library[item.bookId].title : 'Desconocido';
+                    itemsHtml += `
+                        <div class="px-4 py-3 flex items-start gap-3 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                            <div class="flex flex-col items-center min-w-[30px]">
+                                <span class="text-lg font-black text-slate-300 dark:text-slate-600 leading-none">${day}</span>
+                                <span class="text-[9px] text-slate-400 uppercase">${d.toLocaleDateString('es',{weekday:'short'}).slice(0,3)}</span>
+                            </div>
+                            <div class="flex-1">
+                                <p class="text-xs font-bold text-slate-800 dark:text-slate-200">${item.title}</p>
+                                <p class="text-[10px] text-amber-600 dark:text-amber-500 font-medium truncate">${bookName}</p>
+                            </div>
+                             <span class="text-[10px] font-mono text-slate-400 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded">${formatDuration(item.duration)}</span>
+                        </div>
+                    `;
+                });
+                monthDiv.innerHTML = monthHeader + itemsHtml;
+                container.appendChild(monthDiv);
+            });
         }
 
-        function togglePomodoro() {
-            pomoActive = !pomoActive; const btn = document.getElementById('pomo-btn');
-            if(pomoActive) {
-                btn.innerHTML = '<i data-lucide="square" class="w-4 h-4 text-red-500"></i>';
-                pomoInterval = setInterval(() => {
-                    pomoTime--;
-                    if(pomoTime <= 0) { clearInterval(pomoInterval); alert("Sesión terminada"); pomoActive = false; pomoTime = 1500; }
-                    const m = Math.floor(pomoTime/60), s = pomoTime%60;
-                    safeSet('pomo-timer', `${m}:${s < 10 ? '0' : ''}${s}`);
-                }, 1000);
-            } else { btn.innerHTML = '<i data-lucide="play" class="w-4 h-4"></i>'; clearInterval(pomoInterval); }
-            lucide.createIcons();
+        // Nueva función renderHeatmap tipo Calendario
+        function renderHeatmap() {
+            const container = document.getElementById('streak-heatmap');
+            if (!container) return;
+            container.innerHTML = '';
+            
+            // Map de actividad
+            const actMap = {}; 
+            listeningHistory.forEach(l => { 
+                const k = new Date(l.timestamp).toISOString().split('T')[0]; 
+                actMap[k] = (actMap[k] || 0) + l.duration; 
+            });
+
+            const now = new Date();
+            // Mostrar últimos 4 meses
+            const monthsToShow = 4;
+            
+            for (let i = monthsToShow - 1; i >= 0; i--) {
+                const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+                const monthName = d.toLocaleDateString('es', { month: 'long' });
+                const year = d.getFullYear();
+                const daysInMonth = new Date(year, d.getMonth() + 1, 0).getDate();
+                const startDay = new Date(year, d.getMonth(), 1).getDay(); // 0 is Sunday
+                
+                // Contenedor Mes
+                const monthDiv = document.createElement('div');
+                monthDiv.className = 'flex flex-col gap-2';
+                
+                // Header Mes
+                const header = document.createElement('h4');
+                header.className = 'text-[10px] font-bold uppercase text-slate-400 text-center tracking-wider';
+                header.innerText = monthName;
+                monthDiv.appendChild(header);
+                
+                // Grid Calendario (7 cols)
+                const grid = document.createElement('div');
+                grid.className = 'grid grid-cols-7 gap-1';
+                
+                // Relleno días vacíos al inicio (asumiendo Domingo inicio semana)
+                for (let j = 0; j < startDay; j++) {
+                    const empty = document.createElement('div');
+                    empty.className = 'w-3 h-3'; // Placeholder
+                    grid.appendChild(empty);
+                }
+                
+                for (let day = 1; day <= daysInMonth; day++) {
+                    // Crear fecha local segura para evitar saltos de zona horaria
+                    const localDate = new Date(year, d.getMonth(), day, 12, 0, 0);
+                    const dateStr = localDate.toISOString().split('T')[0];
+                    const v = actMap[dateStr] || 0;
+                    
+                    const cell = document.createElement('div');
+                    cell.title = `${day} ${monthName}: ${Math.round(v/60)} min`;
+                    
+                    let bgClass = 'bg-slate-100 dark:bg-slate-800';
+                    if (v > 0) bgClass = 'bg-amber-200';
+                    if (v > 900) bgClass = 'bg-amber-300'; // > 15 min
+                    if (v > 1800) bgClass = 'bg-amber-400'; // > 30 min
+                    if (v > 3600) bgClass = 'bg-amber-500'; // > 1 hora
+                    
+                    cell.className = `w-3 h-3 rounded-sm transition-colors ${bgClass}`;
+                    grid.appendChild(cell);
+                }
+                
+                monthDiv.appendChild(grid);
+                container.appendChild(monthDiv);
+            }
         }
 
         function renderAllNotes(onlyFavs = false) {
@@ -646,21 +857,35 @@
 
         function parseTimeStr(t) { const p = t.split(':').map(Number); return p.length === 3 ? p[0]*3600 + p[1]*60 + p[2] : p[0]*60 + p[1]; }
         function formatDuration(s) { const h = Math.floor(s/3600), m = Math.floor((s%3600)/60); return h > 0 ? `${h}h ${m}m` : `${m} min`; }
-        function loadRandomQuote() { const q = library[currentBookId].quotes; safeSet('quote-text', `"${q[Math.floor(Math.random()*q.length)]}"`); safeSet('quote-author', `— ${library[currentBookId].author}`); }
+        function loadRandomQuote() { 
+            // Fallback inicial
+            updateQuoteWidget();
+        }
         function toggleDarkMode() { document.documentElement.classList.toggle('dark'); localStorage.setItem('theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light'); }
         function triggerConfetti() { confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } }); }
         
-        function openVideo(s, e, v) { 
-            const start = parseTimeStr(s), end = parseTimeStr(e), id = v || library[currentBookId].videoId; 
-            document.getElementById('youtube-iframe').src = `https://www.youtube.com/embed/${id}?start=${start}&end=${end}&autoplay=1&rel=0`; 
+        function openVideo(id, title, s, e, v) { 
+            const start = parseTimeStr(s), end = parseTimeStr(e), vidId = v || library[currentBookId].videoId; 
+            document.getElementById('youtube-iframe').src = `https://www.youtube.com/embed/${vidId}?start=${start}&end=${end}&autoplay=1&rel=0`; 
             document.getElementById('video-modal').classList.remove('hidden'); 
+            
+            // Set active playback for auto-complete
+            activePlayback = { id: id, title: title, start: s, end: e };
             startCountdown(end - start);
         }
 
         function startCountdown(seconds) {
             if(countdownInterval) clearInterval(countdownInterval);
             let rem = seconds; updateCountdownUI(rem);
-            countdownInterval = setInterval(() => { rem--; if(rem <= 0) { clearInterval(countdownInterval); closeVideo(); } updateCountdownUI(rem); }, 1000);
+            countdownInterval = setInterval(() => { 
+                rem--; 
+                if(rem <= 0) { 
+                    clearInterval(countdownInterval); 
+                    closeVideo(); 
+                    autoComplete(activePlayback); // Trigger auto-complete
+                } 
+                updateCountdownUI(rem); 
+            }, 1000);
         }
 
         function updateCountdownUI(sec) {
@@ -669,7 +894,12 @@
             const el = document.getElementById('playback-countdown'); if(el) el.innerText = text;
         }
 
-        function closeVideo() { document.getElementById('youtube-iframe').src = ""; document.getElementById('video-modal').classList.add('hidden'); if(countdownInterval) clearInterval(countdownInterval); }
+        function closeVideo() { 
+            document.getElementById('youtube-iframe').src = ""; 
+            document.getElementById('video-modal').classList.add('hidden'); 
+            if(countdownInterval) clearInterval(countdownInterval); 
+            activePlayback = null;
+        }
         function openNotes(id, title) { activeNoteId = `${currentBookId}_${id}`; safeSet('note-chapter-title', title); document.getElementById('note-textarea').value = chapterNotes[activeNoteId] || ""; document.getElementById('notes-modal').classList.remove('hidden'); }
         function saveNote() { const v = document.getElementById('note-textarea').value; if(v.trim()) chapterNotes[activeNoteId] = v; else delete chapterNotes[activeNoteId]; localStorage.setItem('chapterNotes', JSON.stringify(chapterNotes)); closeNotes(); renderLibraryList(); }
         function closeNotes() { document.getElementById('notes-modal').classList.add('hidden'); activeNoteId = null; }
@@ -702,8 +932,8 @@
             if(localStorage.getItem('theme') === 'dark') document.documentElement.classList.add('dark');
             const stored = localStorage.getItem('activeBookId'); if(stored && library[stored]) currentBookId = stored;
             switchBook(currentBookId);
+            updateChartFilter('week'); // Init chart
         });
     </script>
 </body>
 </html>
-
